@@ -25,7 +25,9 @@ JSON 하나만 낸다. 렌더러(`worksheet-render.html`)가 이 JSON 을 A4 조
 - `themeName` — 교과 색 테마. `ko`(국어) · `sci`(과학) · `social`(사회·역사·도덕) · `english`(영어) ·
   `math`(수학) 다섯 중 하나. 색을 직접 쓰지 말고 이 이름만 고른다.
 - `runHead` / `runFoot` — 모든 쪽 위·아래에 반복되는 머리글/꼬리글. `rightPrefix` 뒤에 쪽번호가 자동으로 붙는다.
-- `head.katex` — 수식이 있을 때만 `true`. 그때 `$V = IR$`, `$$\int f(x)dx$$` 처럼 `$` 구분자를 쓸 수 있다.
+- `head.katex` — 수식이 있을 때만 `true`. 그때 `$V = IR$` 처럼 `$…$` 구분자를 쓴다(인라인만 —
+  `$$…$$` 는 쓰지 않는다). 분수는 `\dfrac`. HTML 필드 안의 부등호는 `\lt`·`\gt` 로 쓴다
+  (`<`·`>` 는 HTML 태그로 읽힌다).
 - `standards` — 성취기준 **원문 대장에서 조회한 것만**. 지어내지 않는다. 못 찾으면 이 배열을 비우고
   교사에게 코드를 물어본다.
 - `pages` — **항상 `[{ "flow": [ … ] }]` 한 개만 낸다.** 쪽 나눔은 렌더러가 실제 높이를 재서 정한다.
@@ -33,14 +35,30 @@ JSON 하나만 낸다. 렌더러(`worksheet-render.html`)가 이 JSON 을 A4 조
 - 쓰지 않는 필드: `pagination`, 개체의 `id`, `placement`, `rect`(좌표), `widthPct`/`minHeightMm`/`align`.
   좌표와 조판은 사람과 엔진의 몫이다.
 
-## 1. 개체 11종 (이 목록 밖의 `type` 은 렌더되지 않는다)
+## 1. 개체 12종 (이 목록 밖의 `type` 은 렌더되지 않는다)
 
 ### title — 제목
 ```json
 { "type": "title", "level": 1, "text": "옴의 법칙 — 전압·전류·저항의 관계 찾기",
   "meta": { "pill": "전기와 자기", "page": "중학교 과학" } }
+{ "type": "title", "level": 2, "text": "선분의 내분점" }
 ```
-`level` 1 = 활동지 대제목(문서에 한 번), 2 = 중간 소제목(섹션 머리). `meta` 는 `level:1` 에서만 쓴다.
+`level` 1 = 활동지 대제목(문서에 한 번, 큰 테두리 상자). `level` 2 = 소주제 제목 — **원형 번호가 자동으로
+붙는 한 줄 헤딩**(①, ②, …)이다. 번호를 text 에 직접 쓰지 않는다("1. 내분점" ✗ → "선분의 내분점" ✓).
+`meta` 는 `level:1` 에서만 쓴다.
+
+### columns — 두 문항을 나란히
+```json
+{ "type": "columns", "children": [
+    [ { "type": "question", "qnum": 1, "qtype": "essay", "lines": 5, "prompt": "…" } ],
+    [ { "type": "question", "qnum": 2, "qtype": "essay", "lines": 5, "prompt": "…" } ]
+] }
+```
+`children` 은 **열의 배열**(2~3열)이고, 각 열은 개체 배열이다. **교사가 "2단"·"나란히"·"두 문항씩
+옆으로"·"한 장에 압축"을 요청했을 때만 쓴다** — 기본은 문항을 전체 폭으로 하나씩 놓는 것이다.
+열 안에는 `question` · `callout` · `table` · `richtext` · `answer-area` · `image-slot` 을 둘 수 있고,
+`columns` 안에 `columns` 는 안 된다. 두 상자의 높이는 자동으로 맞춰진다. `ratio: [2, 1]` 로 열 너비
+비율을 줄 수 있다(생략 시 균등).
 
 ### std-box — 학습 목표 상자
 ```json
@@ -61,7 +79,11 @@ JSON 하나만 낸다. 렌더러(`worksheet-render.html`)가 이 JSON 을 A4 조
 - `qtype` 7종만: `multiple-choice`(→`choices`) · `short-answer`(한 줄 답란 자동) ·
   `essay`(→`lines`, 기본 4줄) · `fill-blank`(발문 안에 `_____`, 보기는 `choices`) ·
   `true-false`(판별 문장을 `choices` 에) · `matching`(→`left`, `right`) · `ordering`(→`items`).
-- `qnum` 은 사람이 읽는 문항 번호. 활동지 전체에서 1부터 이어 붙인다.
+- **계산·풀이·서술 문항은 `essay` + `lines: 4`**(긴 풀이는 6)로 풀이 공간을 준다. `short-answer` 는
+  낱말·수치 하나만 묻는 경우에 쓴다(답란이 한 줄이라 풀이 과정을 쓸 자리가 없다).
+- 발문에 수식이 있으면 `promptHtml` 에 `$…$` 로 쓰고 `prompt` 에는 같은 내용을 평문으로 둔다.
+  유형 표식은 `promptHtml` 앞에 `<b>[평행]</b>` 처럼 붙인다.
+- `qnum` 은 사람이 읽는 문항 번호. 활동지 전체에서 1부터 이어 붙인다(`columns` 안 문항도 포함).
 - **정답은 `answerKey` 에만 쓴다. 반드시 `{ "text": "…" }` 객체다**(문자열로 쓰면 교사용에 아무것도 안 찍힌다).
   수식이 필요하면 `{ "text": "y=3x-1", "html": "<b>$y=3x-1$</b>" }` 처럼 둘 다 준다.
 - 답란은 qtype 이 자동으로 만든다. 더 넓은 공간이 필요할 때만 뒤에 `answer-area` 를 덧붙인다.
@@ -85,6 +107,8 @@ JSON 하나만 낸다. 렌더러(`worksheet-render.html`)가 이 JSON 을 A4 조
 ```
 `variant`: `tip`(도움말) · `warning`(주의) · `note`(참고) · `summary`(핵심 정리).
 `body` 는 간단한 HTML(`p` `ul` `ol` `li` `b` `strong` `em` `br` `table` 등, `class`/`style` 금지).
+**개념·공식 정리는 이 callout 으로 한다**(title "개념과 공식", 공식은 `$…$`, 분수는 `\dfrac`).
+공식을 `table` 에 넣으면 셀 안에서 수식이 작아져 읽기 어렵다.
 **정답을 여기에 쓰지 않는다** — callout 은 학생용에도 그대로 나온다.
 
 ### answer-area — 답 쓰는 공간
@@ -157,17 +181,23 @@ JSON 하나만 낸다. 렌더러(`worksheet-render.html`)가 이 JSON 을 A4 조
 렌더러는 학생용을 만들 때 이 두 가지를 **물리적으로 제거**한 다음, 남은 흔적이 있으면 학생용
 출력 자체를 막는다. 그러니 정답은 절대 발문·callout·표 셀·richtext 본문에 섞어 쓰지 않는다.
 
-## 3. 활동지 한 장의 기본 흐름
+## 3. 활동지의 기본 흐름
 
 1. `title`(level 1) → 2. `richtext`(unit-line 이름칸) → 3. `std-box`(학습 목표) →
-4. `richtext`(direct 지시문) → 5. 활동별로 `title`(level 2) + `callout`/`table`/`organizer` +
-`question` 묶음 → 6. 마지막에 성찰 문항(`question`, `essay`) 1개.
+4. `richtext`(direct 지시문) → 5. **소주제마다** `title`(level 2) + `callout`(개념과 공식) +
+문항 2개(`essay` `lines: 4`, 전체 폭으로 하나씩 — 교사가 요청하면 `columns` 로 나란히) → 6. 마무리.
 
-A4 한 장 기준 분량: 문항 4~7개. 표·조직자가 크면 문항을 줄인다.
+- **한 차시 활동지**: A4 1~2장, 문항 4~7개, 마지막에 성찰 문항(`essay`, `lines: 3`) 1개.
+- **단원 복습·공식 정리·기본 문제**: 소주제를 모두 다루고 소주제마다 문항 2개 이상 → A4 3~4장,
+  문항 12~16개. 마지막에 "종합 연습" 소주제와 **공식 자기점검 `table`**(소주제별 열, 빈 행 `h: 12`).
+
+`example-worksheet-math.json` 이 복습형의 완성 예시, `example-worksheet-science.json` 이 차시형의 완성 예시다.
 
 ## 4. 스스로 점검할 것 (JSON 을 내기 전에)
 
-- [ ] `type` 이 위 11종 안에 있는가? `qtype` 이 7종 안에 있는가?
+- [ ] `type` 이 위 12종 안에 있는가? `qtype` 이 7종 안에 있는가?
+- [ ] 풀이가 필요한 문항이 `essay` + `lines: 4` 인가? `columns` 는 교사가 요청했을 때만 썼는가?
+- [ ] 소주제 제목(`title` level 2) text 에 번호를 직접 쓰지 않았는가?
 - [ ] 표 셀이 모두 `{ "text": … }` 인가? `splittable: false` 인가?
 - [ ] `answerKey` 가 `{ "text": … }` 객체인가? 정답이 발문·callout·표에 새지 않았는가?
 - [ ] 성취기준 코드·원문이 대장에 있는 것과 **글자 그대로** 같은가?

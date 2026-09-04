@@ -1,0 +1,204 @@
+{
+  "docTitle": "도형의 방정식 — 공식 정리와 기본 문제",
+  "subject": "수학",
+  "themeName": "math",
+  "lang": "ko",
+  "runHead": "2022 개정 교육과정 · 공통수학2 · 도형의 방정식",
+  "runFoot": { "left": "고등학교 공통수학2 복습 학습지", "rightPrefix": "도형의 방정식" },
+  "paper": { "size": "a4", "orientation": "portrait" },
+  "head": { "katex": true },
+  "standards": [
+    { "code": "[10공수2-01-01]", "text": "선분의 내분을 이해하고 내분점의 좌표를 계산할 수 있다." },
+    { "code": "[10공수2-01-03]", "text": "점과 직선 사이의 거리를 구하고 관련된 문제를 해결할 수 있다." },
+    { "code": "[10공수2-01-05]", "text": "좌표평면에서 원과 직선의 위치 관계를 판단하고 이를 활용하여 문제를 해결할 수 있다." }
+  ],
+  "pages": [
+    {
+      "flow": [
+        {
+          "type": "title",
+          "level": 1,
+          "text": "도형의 방정식 — 공식 정리와 기본 문제",
+          "meta": { "pill": "복습 학습지", "page": "고등학교 공통수학2" }
+        },
+        {
+          "type": "richtext",
+          "html": "<div class='unit-line'><div class='unit'><b>단원</b>　Ⅰ. 도형의 방정식 — 선분의 내분점 ~ 원의 접선</div><div class='namefield'>학년<span></span> 반<span></span> 이름<span></span></div></div>"
+        },
+        {
+          "type": "std-box",
+          "codes": ["[10공수2-01-01]", "[10공수2-01-03]", "[10공수2-01-05]"],
+          "objectives": [
+            "선분의 내분점과 두 직선의 평행·수직 조건을 이용해 좌표평면의 점과 직선을 다룰 수 있다.",
+            "점과 직선 사이의 거리 공식을 이용해 거리를 구할 수 있다.",
+            "원의 방정식을 구하고, 원과 직선의 위치 관계를 판단하며 원의 접선의 방정식을 구할 수 있다."
+          ]
+        },
+        {
+          "type": "richtext",
+          "html": "<div class='direct'>단원마다 <b>공식을 먼저 눈으로 확인</b>하고, 바로 아래 기본 문제로 손에 익히자. 공식은 외우는 것이 아니라 <b>어디에 대입하는지</b>를 기억하는 것이다.</div>"
+        },
+
+        { "type": "title", "level": 2, "text": "선분의 내분점" },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "개념과 공식",
+          "body": "<p>선분 AB를 $m:n$으로 <b>내분</b>하는 점은 A에서 B 쪽으로 $m:n$이 되는 점이다.</p><p>두 점 $A(x_1,\\ y_1),\\ B(x_2,\\ y_2)$에 대하여 <b>P</b>$\\left(\\dfrac{mx_2+nx_1}{m+n},\\ \\dfrac{my_2+ny_1}{m+n}\\right)$ · 중점 <b>M</b>$\\left(\\dfrac{x_1+x_2}{2},\\ \\dfrac{y_1+y_2}{2}\\right)$</p><p>분자에서 $m$은 <b>먼 쪽 점</b>의 좌표 $x_2$와 곱한다(순서 주의).</p>"
+        },
+        {
+          "type": "question", "qnum": 1, "qtype": "essay", "lines": 4,
+          "prompt": "두 점 A(1, 2), B(7, 5)에 대하여 선분 AB를 2:1로 내분하는 점 P의 좌표를 구하시오.",
+          "promptHtml": "두 점 $A(1,\\ 2),\\ B(7,\\ 5)$에 대하여 선분 AB를 $2:1$로 내분하는 점 P의 좌표를 구하시오.",
+          "answerKey": { "text": "P(5, 4). x = (2·7 + 1·1)/3 = 5, y = (2·5 + 1·2)/3 = 4" }
+        },
+        {
+          "type": "question", "qnum": 2, "qtype": "essay", "lines": 4,
+          "prompt": "두 점 A(-2, 3), B(6, -1)에 대하여 중점 M과, 선분 AB를 1:3으로 내분하는 점 Q의 좌표를 구하시오.",
+          "promptHtml": "두 점 $A(-2,\\ 3),\\ B(6,\\ -1)$에 대하여 중점 M과, 선분 AB를 $1:3$으로 내분하는 점 Q의 좌표를 구하시오.",
+          "answerKey": { "text": "M(2, 1), Q(0, 2). Q의 x = (1·6 + 3·(−2))/4 = 0, y = (1·(−1) + 3·3)/4 = 2" }
+        },
+
+        { "type": "title", "level": 2, "text": "두 직선의 평행과 수직" },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "개념과 공식",
+          "body": "<p>두 직선 $y=m_1x+n_1,\\ y=m_2x+n_2$에 대하여 <b>평행</b> $\\iff m_1=m_2$ (단 $n_1\\ne n_2$), <b>수직</b> $\\iff m_1m_2=-1$</p><p>일반형 $ax+by+c=0,\\ a'x+b'y+c'=0$이면 평행 $\\iff ab'-a'b=0$, 수직 $\\iff aa'+bb'=0$</p>"
+        },
+        {
+          "type": "question", "qnum": 3, "qtype": "essay", "lines": 4,
+          "prompt": "[평행] 직선 y = 2x + 1에 평행하고 점 (1, 5)를 지나는 직선의 방정식을 구하시오.",
+          "promptHtml": "<b>[평행]</b> 직선 $y=2x+1$에 평행하고 점 $(1,\\ 5)$를 지나는 직선의 방정식을 구하시오.",
+          "answerKey": { "text": "y = 2x + 3 (기울기 2를 그대로 쓰고 (1, 5) 대입)" }
+        },
+        {
+          "type": "question", "qnum": 4, "qtype": "essay", "lines": 4,
+          "prompt": "[수직] 직선 x + 2y - 4 = 0에 수직이고 점 (2, -1)을 지나는 직선의 방정식을 구하시오.",
+          "promptHtml": "<b>[수직]</b> 직선 $x+2y-4=0$에 수직이고 점 $(2,\\ -1)$을 지나는 직선의 방정식을 구하시오.",
+          "answerKey": { "text": "y = 2x − 5. 주어진 직선의 기울기 −1/2 → 수직 기울기 2" }
+        },
+
+        { "type": "title", "level": 2, "text": "점과 직선 사이의 거리" },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "개념과 공식",
+          "body": "<p>점 $(x_1,\\ y_1)$과 직선 $ax+by+c=0$ 사이의 거리 $d=\\dfrac{|ax_1+by_1+c|}{\\sqrt{a^2+b^2}}$</p><p>직선을 $ax+by+c=0$ <b>꼴로 정리한 뒤</b> 대입한다. 평행선 사이 거리는 한 직선 위의 점을 잡아 구한다.</p>"
+        },
+        {
+          "type": "question", "qnum": 5, "qtype": "essay", "lines": 4,
+          "prompt": "점 (2, 3)과 직선 3x - 4y + 1 = 0 사이의 거리를 구하시오.",
+          "promptHtml": "점 $(2,\\ 3)$과 직선 $3x-4y+1=0$ 사이의 거리를 구하시오.",
+          "answerKey": { "text": "d = |6 − 12 + 1| / 5 = 1" }
+        },
+        {
+          "type": "question", "qnum": 6, "qtype": "essay", "lines": 4,
+          "prompt": "평행한 두 직선 3x + 4y - 2 = 0과 3x + 4y + 8 = 0 사이의 거리를 구하시오.",
+          "promptHtml": "평행한 두 직선 $3x+4y-2=0$과 $3x+4y+8=0$ 사이의 거리를 구하시오.",
+          "answerKey": { "text": "첫 직선 위의 점 (0, 1/2)에서 둘째 직선까지: |0 + 2 + 8| / 5 = 2" }
+        },
+
+        { "type": "title", "level": 2, "text": "원의 방정식" },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "개념과 공식",
+          "body": "<p>중심 $(a,\\ b)$, 반지름 $r$인 원 $(x-a)^2+(y-b)^2=r^2$</p><p>일반형 $x^2+y^2+Ax+By+C=0$은 완전제곱꼴로 고치면 중심 $\\left(-\\dfrac{A}{2},\\ -\\dfrac{B}{2}\\right)$, 반지름 $\\sqrt{\\dfrac{A^2+B^2}{4}-C}$ (단 근호 안이 양수)</p>"
+        },
+        {
+          "type": "question", "qnum": 7, "qtype": "essay", "lines": 4,
+          "prompt": "중심이 (2, -1)이고 반지름이 3인 원의 방정식을 구하시오.",
+          "promptHtml": "중심이 $(2,\\ -1)$이고 반지름이 $3$인 원의 방정식을 구하시오.",
+          "answerKey": { "text": "(x − 2)² + (y + 1)² = 9" }
+        },
+        {
+          "type": "question", "qnum": 8, "qtype": "essay", "lines": 4,
+          "prompt": "원 x² + y² - 4x + 6y + 9 = 0의 중심의 좌표와 반지름을 구하시오.",
+          "promptHtml": "원 $x^2+y^2-4x+6y+9=0$의 중심의 좌표와 반지름을 구하시오.",
+          "answerKey": { "text": "(x − 2)² + (y + 3)² = 4 → 중심 (2, −3), 반지름 2" }
+        },
+
+        { "type": "title", "level": 2, "text": "원과 직선의 위치 관계" },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "개념과 공식",
+          "body": "<p>원의 <b>중심과 직선 사이의 거리</b> $d$와 <b>반지름</b> $r$를 비교한다.</p><p>$d\\lt r$ 서로 다른 두 점에서 만난다 · $d=r$ 접한다(한 점) · $d\\gt r$ 만나지 않는다</p>"
+        },
+        {
+          "type": "question", "qnum": 9, "qtype": "essay", "lines": 4,
+          "prompt": "원 x² + y² = 4와 직선 y = x + k가 접할 때, 상수 k의 값을 구하시오.",
+          "promptHtml": "원 $x^2+y^2=4$와 직선 $y=x+k$가 접할 때, 상수 $k$의 값을 구하시오.",
+          "answerKey": { "text": "중심 (0, 0)과 x − y + k = 0 사이 거리 |k|/√2 = 2 → k = ±2√2" }
+        },
+        {
+          "type": "question", "qnum": 10, "qtype": "essay", "lines": 4,
+          "prompt": "원 (x - 1)² + y² = 5와 직선 2x - y + 3 = 0의 위치 관계를 말하시오.",
+          "promptHtml": "원 $(x-1)^2+y^2=5$와 직선 $2x-y+3=0$의 위치 관계를 말하시오.",
+          "answerKey": { "text": "d = |2 + 3| / √5 = √5 = r → 접한다(한 점에서 만난다)" }
+        },
+
+        { "type": "title", "level": 2, "text": "원의 접선의 방정식" },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "개념 — 무엇이 주어졌는지로 방법이 갈린다",
+          "body": "<p>접선은 <b>중심에서의 거리 = 반지름</b>인 직선이다. 원 $x^2+y^2=r^2$ 기준으로 주어진 조건에 따라 세 가지로 쓴다.</p><p><b>기울기 $m$</b> → $y=mx\\pm r\\sqrt{m^2+1}$ (부호가 두 개 → 접선도 두 개)<br><b>원 위의 점 $(x_1,\\ y_1)$</b> → $x_1x+y_1y=r^2$ (접점의 좌표를 그대로 대입)<br><b>원 밖의 점 $(p,\\ q)$</b> → 접점을 $(x_1,\\ y_1)$로 놓고 $x_1x+y_1y=r^2$에 $(p,\\ q)$ 대입, 또는 $y=m(x-p)+q$에 $d=r$ 적용</p>"
+        },
+        {
+          "type": "question", "qnum": 11, "qtype": "essay", "lines": 4,
+          "prompt": "[기울기] 원 x² + y² = 9에 접하고 기울기가 2인 접선의 방정식을 모두 구하시오.",
+          "promptHtml": "<b>[기울기]</b> 원 $x^2+y^2=9$에 접하고 기울기가 $2$인 접선의 방정식을 모두 구하시오.",
+          "answerKey": { "text": "y = 2x ± 3√5" }
+        },
+        {
+          "type": "question", "qnum": 12, "qtype": "essay", "lines": 4,
+          "prompt": "[원 위의 점] 원 x² + y² = 25 위의 점 (3, 4)에서의 접선의 방정식을 구하시오.",
+          "promptHtml": "<b>[원 위의 점]</b> 원 $x^2+y^2=25$ 위의 점 $(3,\\ 4)$에서의 접선의 방정식을 구하시오.",
+          "answerKey": { "text": "3x + 4y = 25" }
+        },
+        {
+          "type": "question", "qnum": 13, "qtype": "essay", "lines": 6,
+          "prompt": "[원 밖의 점] 점 (0, 5)에서 원 x² + y² = 5에 그은 접선의 방정식을 모두 구하시오.",
+          "promptHtml": "<b>[원 밖의 점]</b> 점 $(0,\\ 5)$에서 원 $x^2+y^2=5$에 그은 접선의 방정식을 모두 구하시오.",
+          "answerKey": { "text": "y = mx + 5로 놓고 |5|/√(m²+1) = √5 → m² = 4 → y = 2x + 5, y = −2x + 5" }
+        },
+
+        { "type": "title", "level": 2, "text": "종합 연습 — 단원을 섞어 확인하기" },
+        {
+          "type": "question", "qnum": 14, "qtype": "essay", "lines": 4,
+          "prompt": "[내분] 두 점 A(3, -2), B(-1, 6)에 대하여 선분 AB를 3:1로 내분하는 점의 좌표를 구하시오.",
+          "promptHtml": "<b>[내분]</b> 두 점 $A(3,\\ -2),\\ B(-1,\\ 6)$에 대하여 선분 AB를 $3:1$로 내분하는 점의 좌표를 구하시오.",
+          "answerKey": { "text": "(0, 4). x = (3·(−1) + 1·3)/4 = 0, y = (3·6 + 1·(−2))/4 = 4" }
+        },
+        {
+          "type": "question", "qnum": 15, "qtype": "essay", "lines": 4,
+          "prompt": "[평행] 두 직선 2x - y + 1 = 0과 ax + 3y - 2 = 0이 서로 평행할 때, 상수 a의 값을 구하시오.",
+          "promptHtml": "<b>[평행]</b> 두 직선 $2x-y+1=0$과 $ax+3y-2=0$이 서로 평행할 때, 상수 $a$의 값을 구하시오.",
+          "answerKey": { "text": "2·3 − a·(−1) = 0 → a = −6" }
+        },
+        {
+          "type": "table",
+          "splittable": false,
+          "headerRows": 1,
+          "caption": "공식 자기점검 — 보지 않고 쓸 수 있으면 ○, 헷갈리면 △, 아직이면 ✕",
+          "rows": [
+            [
+              { "text": "내분점", "header": true, "align": "center" },
+              { "text": "평행·수직", "header": true, "align": "center" },
+              { "text": "점과 직선의 거리", "header": true, "align": "center" },
+              { "text": "원의 방정식", "header": true, "align": "center" },
+              { "text": "원과 직선의 위치", "header": true, "align": "center" },
+              { "text": "원의 접선", "header": true, "align": "center" }
+            ],
+            [
+              { "text": "", "h": 12 }, { "text": "", "h": 12 }, { "text": "", "h": 12 },
+              { "text": "", "h": 12 }, { "text": "", "h": 12 }, { "text": "", "h": 12 }
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+}

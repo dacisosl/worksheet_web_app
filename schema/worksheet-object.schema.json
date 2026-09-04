@@ -35,7 +35,7 @@
       "type": { "type": "string", "enum": [
         "title", "passage-slot", "question", "table", "image-slot",
         "answer-area", "divider", "shape", "richtext", "std-box",
-        "callout", "organizer", "spacer", "page-break"
+        "callout", "organizer", "spacer", "page-break", "columns"
       ]},
       "answer": {
         "type": "boolean",
@@ -80,8 +80,33 @@
       }
     },
 
+    "columnsObject": {
+      "type": "object",
+      "description": "다단 배치(2026-09-04) — 열(2~3개)마다 flow 개체를 세로로 쌓아 나란히 놓는다. 문항 2개를 옆으로 두는 수학·과학 연습지의 표준 조판. 조판 단위는 이 개체 하나(분할 불가, 표와 같다). 자식은 측정(data-oid) 대상이 아니며, 자식의 answer/answerKey 는 BuildVariants 가 재귀로 제거한다. 중첩 columns·page-break·shape·std-box 는 자식으로 둘 수 없다(validateObjectShape 가 막는다).",
+      "required": ["id", "type", "placement", "children"],
+      "properties": {
+        "id": { "$ref": "#/$defs/commonProps/id" },
+        "type": { "const": "columns" },
+        "placement": { "const": "flow" },
+        "children": {
+          "type": "array", "minItems": 2, "maxItems": 3,
+          "description": "열 배열의 배열 — [[개체…], [개체…]]. 각 열은 위에서 아래로 쌓인다.",
+          "items": { "type": "array", "items": { "$ref": "#/$defs/object" } }
+        },
+        "ratio": {
+          "type": "array", "items": { "type": "number", "exclusiveMinimum": 0 },
+          "description": "열 너비 비율(예: [1, 1], [2, 1]). 생략하면 균등."
+        },
+        "widthPct": { "$ref": "#/$defs/commonProps/widthPct" },
+        "minHeightMm": { "$ref": "#/$defs/commonProps/minHeightMm" },
+        "align": { "$ref": "#/$defs/commonProps/align" }
+      },
+      "additionalProperties": false
+    },
+
     "object": {
       "oneOf": [
+        { "$ref": "#/$defs/columnsObject" },
         { "$ref": "#/$defs/titleObject" },
         { "$ref": "#/$defs/passageSlotObject" },
         { "$ref": "#/$defs/questionObject" },

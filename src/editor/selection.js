@@ -35,7 +35,7 @@ const EDIT_FIELD = Object.freeze({
   // htmlField(선택): 인라인 서식(굵게/기울임 등)을 적용하면 그 살균 HTML 을 이 필드에 병행 저장한다
   // (평문 field 는 그대로 유지 — 정답 누출 스캔·diff·평문 소비자용). 렌더는 htmlField 가 있으면
   // 그걸, 없으면 평문 field 를 이스케이프해 방출한다(RenderObjectTree, 하위호환).
-  title: Object.freeze({ field: 'text', htmlField: 'textHtml', selector: '.title-box h1, .title-box h2' }),
+  title: Object.freeze({ field: 'text', htmlField: 'textHtml', selector: '.title-box h1, .title-box h2, h2.sec' }),
   question: Object.freeze({ field: 'prompt', htmlField: 'promptHtml', selector: '.q', stripSelector: '.qnum' }),
   richtext: Object.freeze({ field: 'html', selector: null }),
   'answer-area': Object.freeze({ field: 'label', selector: '.aa-label' }),

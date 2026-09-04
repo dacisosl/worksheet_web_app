@@ -163,6 +163,19 @@ export const TYPE_SPECS = Object.freeze({
     required: Object.freeze(['kind']),
     optional: Object.freeze(['params', 'labels', ...SIZE_FIELDS]),
   }),
+  // ── 다단 배치(2026-09-04 신설) ─────────────────────────────────────────────
+  // 문항 두 개를 나란히 놓는 것 — 수학·과학 연습지의 표준 조판이다(실측: 교사가 원한 산출물은
+  // 문항이 2열이었고, 우리 산출물은 문항마다 한 줄씩 세로로 쌓여 4쪽에 걸쳐 늘어졌다).
+  // children = 열 배열의 배열([[개체…],[개체…]]) — 각 열은 flow 개체 목록이다. 조판상 **한 덩어리**로
+  // 다룬다(분할 불가 — 표와 같다): 측정·쪽 귀속은 이 개체 하나를 단위로 하고, 자식은 data-oid 를
+  // 받지 않는다(자식이 따로 측정되면 top-델타 측정이 어긋난다). 중첩 columns 는 금지(validateObjectShape).
+  // 자식의 answer:true / answerKey 는 BuildVariants 가 **재귀로** 제거한다 — 학생 벌 불변식은 깊이에
+  // 무관하게 성립해야 한다.
+  'columns': Object.freeze({
+    placements: Object.freeze(['flow']),
+    required: Object.freeze(['children']),
+    optional: Object.freeze(['ratio', ...SIZE_FIELDS]),
+  }),
   // ── 레이아웃 전용 2종(2026-07-28 신설) ─────────────────────────────────────
   // 둘 다 "내용"이 아니라 **조판 의도**를 담는다. flow 전용인 이유가 각각 있다(아래 주석).
   // 교사가 편집기에서 삽입하는 도구이며, designer AI 의 저작 어휘에는 넣지 않는다
@@ -181,7 +194,7 @@ export const TYPE_SPECS = Object.freeze({
   }),
 });
 
-/** 닫힌 카탈로그(14종 — 콘텐츠 12[+callout M4·+organizer P3] + 레이아웃 2). TYPE_SPECS 키 순서를 그대로 노출. */
+/** 닫힌 카탈로그(15종 — 콘텐츠 12[+callout M4·+organizer P3] + 레이아웃 3[spacer·page-break·columns]). TYPE_SPECS 키 순서를 그대로 노출. */
 export const OBJECT_TYPES = Object.freeze(Object.keys(TYPE_SPECS));
 
 /**

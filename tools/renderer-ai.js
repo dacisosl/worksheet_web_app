@@ -14,7 +14,7 @@
 // 키는 이 브라우저 localStorage 에만 저장하고, 서버를 거치지 않고 각 API 로 직접 보낸다.
 
 var LS_PROVIDER = 'wsg.ai.provider';
-var chat = { history: [], busy: false }; // history: [{role:'user'|'model', text}]
+var chat = { history: [], busy: false, subjectHint: 'general' }; // history: [{role:'user'|'model', text}]
 
 function lsGet(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
 function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* 사생활 보호 모드 */ } }
@@ -167,10 +167,16 @@ function unique(list) {
 }
 
 // ── 프롬프트 조립 ──────────────────────────────────────────────────────────
-function systemInstruction() {
+/** 요청 교과가 수학 계열이면 수학 예시(2단 문항·공식 callout·자기점검표)를 싣는다 — 모델은 예시의
+ *  조판 패턴을 그대로 흉내 내므로, 어떤 예시를 보이느냐가 결과물의 밀도를 정한다. */
+function isMathSubject(subjects) {
+  return (subjects || []).some(function (s) { return /수학|대수|미적분|기하|확률과 통계|경제 수학/.test(s); });
+}
+function systemInstruction(subjectHint) {
+  var example = subjectHint === 'math' ? WSG_PROMPT.examples.math : WSG_PROMPT.examples.general;
   return WSG_PROMPT.system
     + '\n\n---\n\n# 활동지 JSON 저작 규격\n\n' + WSG_PROMPT.spec
-    + '\n\n---\n\n# 참고 예시 (형식만 참고하고 내용을 베끼지 않는다)\n\n' + WSG_PROMPT.example;
+    + '\n\n---\n\n# 참고 예시 (형식·밀도만 참고하고 내용을 베끼지 않는다)\n\n' + example;
 }
 function firstUserMessage(request, found) {
   var where = [found.school, found.subjects.join(' / ')].filter(Boolean).join(' ');
@@ -460,6 +466,7 @@ function ask() {
   } else {
     var found = searchStandards(request, STD_SEARCH_LIMIT);
     userText = firstUserMessage(request, found);
+    chat.subjectHint = isMathSubject(found.subjects) || /수학/.test(request) ? 'math' : 'general';
     var where = [found.school, found.subjects.slice(0, 3).join('/')].filter(Boolean).join(' ');
     say('muted', '성취기준 ' + found.hits.length + '건을 함께 보냅니다'
       + (where ? ' (' + esc(where) + ')' : '')
@@ -477,7 +484,7 @@ function ask() {
   el.btnAsk.disabled = true;
   var typing = pushTyping();
 
-  provider().generate(key, model, systemInstruction(), history, true).then(function (out) {
+  provider().generate(key, model, systemInstruction(chat.subjectHint), history, true).then(function (out) {
     if (!out.text || !out.text.trim()) {
       throw new Error(out.truncated
         ? '응답이 길이 제한에 걸려 끊겼습니다 — "문항을 5개로 줄여줘"처럼 좁혀 요청하세요.'
@@ -563,6 +570,7 @@ window.WSG_DEBUG = {
   searchStandards: searchStandards,
   buildPrompt: function (request) {
     var found = searchStandards(request, STD_SEARCH_LIMIT);
-    return { system: systemInstruction(), user: firstUserMessage(request, found), found: found };
+    var hint = isMathSubject(found.subjects) || /수학/.test(request) ? 'math' : 'general';
+    return { system: systemInstruction(hint), user: firstUserMessage(request, found), found: found, example: hint };
   },
 };

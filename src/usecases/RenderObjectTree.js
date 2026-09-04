@@ -88,7 +88,8 @@ export class RenderObjectTree {
     const standardsByCode = new Map(
       (meta.standards || []).map((s) => [String(s.code).replace(/^\[|\]$/g, ''), s.text]),
     );
-    const ctx = { standardsByCode, editMode };
+    // counters 는 참조로 공유되는 객체다 — columns 자식 렌더가 ctx 를 복사해도 섹션 번호가 이어진다.
+    const ctx = { standardsByCode, editMode, counters: { section: 0 } };
 
     const pages = Array.isArray(document.pages) ? document.pages : [];
     const pagesHtml = pages.map((page, idx) => {
@@ -266,9 +267,30 @@ function renderByType(obj, ctx) {
     case 'organizer': return renderOrganizer(obj);
     case 'spacer': return renderSpacer(obj);
     case 'page-break': return renderPageBreak();
+    case 'columns': return renderColumns(obj, ctx);
     default:
-      throw new Error(`RenderObjectTree: 닫힌 카탈로그(14종) 밖의 타입입니다: ${obj?.type}`);
+      throw new Error(`RenderObjectTree: 닫힌 카탈로그(15종) 밖의 타입입니다: ${obj?.type}`);
   }
+}
+
+/**
+ * 다단 배치 — 열마다 flow 개체를 세로로 쌓고 열을 가로로 나란히 둔다(CSS grid, blocks.css `.wg-cols`).
+ * 자식은 **editMode 를 끄고** 렌더한다: 자식이 data-oid 래퍼를 받으면 (1) 측정 패스가 자식을 별도
+ * 개체로 오인해 top-델타가 어긋나고 (2) 편집기 선택이 부모/자식 두 층으로 갈린다. 조판 단위는 이
+ * 개체 하나다(표와 같이 분할 불가 — `.wg-cols{break-inside:avoid}`).
+ */
+function renderColumns(obj, ctx = {}) {
+  const cols = Array.isArray(obj.children) ? obj.children : [];
+  const childCtx = { ...ctx, editMode: false }; // counters 는 참조 공유 — 섹션 번호가 이어진다
+  const ratio = Array.isArray(obj.ratio) && obj.ratio.length === cols.length
+    ? obj.ratio.map((r) => `${Number(r)}fr`).join(' ')
+    : '';
+  const styleAttr = ratio ? ` style="grid-template-columns:${ratio}"` : '';
+  const colsHtml = cols.map((col) => {
+    const items = (Array.isArray(col) ? col : []).map((child) => renderFlowObject(child, childCtx)).join('\n    ');
+    return `  <div class="wg-col">\n    ${items}\n  </div>`;
+  }).join('\n');
+  return `<div class="wg-cols" data-cols="${cols.length}"${styleAttr}>\n${colsHtml}\n</div>`;
 }
 
 function renderTitle(obj, ctx = {}) {
@@ -283,6 +305,16 @@ function renderTitle(obj, ctx = {}) {
   // textHtml(인라인 서식 살균 HTML)이 있으면 그대로 방출(richtext.html 관례 — 이스케이프 없음),
   // 없으면 평문 text 를 이스케이프(하위호환).
   const titleInner = typeof obj.textHtml === 'string' && obj.textHtml !== '' ? obj.textHtml : escapeHtml(obj.text);
+  // level 2 = 섹션 소제목. 종전엔 level 1 과 같은 `.title-box`(굵은 테두리·가운데 정렬·20pt) 안에 h2 만
+  // 바꿔 넣어서, 섹션이 여섯 개면 대제목 상자가 여섯 번 반복됐다(실측: 문항 10개짜리 복습지가 4쪽으로
+  // 늘어진 첫째 원인). 블록 라이브러리의 section-heading(`h2.sec` + 원형 번호)과 같은 마크업을 낸다 —
+  // 번호는 문서 순서대로 엔진이 매긴다(qnum 과 달리 저작자가 세지 않는다). meta(pill/page/source)는
+  // 대제목 전용이라 level 2 에서는 내지 않는다.
+  if (level === 2) {
+    const counters = ctx.counters || (ctx.counters = { section: 0 });
+    counters.section += 1;
+    return `<h2 class="sec"><span class="n">${counters.section}</span>${titleInner}</h2>`;
+  }
   return `<div class="title-wrap">
     ${pill}${page}<div class="title-box"><${tag}>${titleInner}</${tag}></div>${source}
   </div>`;

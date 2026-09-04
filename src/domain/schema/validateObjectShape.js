@@ -49,7 +49,7 @@ export function validateObjectShape(obj) {
   const { type, placement } = obj;
 
   if (!OBJECT_TYPES.includes(type)) {
-    findings.push({ rule: 'unknown-type', message: `닫힌 카탈로그(14종) 밖의 타입입니다: ${type}`, objectId: obj.id ?? null });
+    findings.push({ rule: 'unknown-type', message: `닫힌 카탈로그(15종) 밖의 타입입니다: ${type}`, objectId: obj.id ?? null });
     return { ok: false, findings }; // 타입 미상이면 이후 필드별 검사가 무의미하다.
   }
 
@@ -145,6 +145,35 @@ export function validateObjectShape(obj) {
   // table rows/cell 을 검사하지 않는 것과 같은 경계다(validator 는 top-level 계약만 본다).
   if (type === 'organizer' && obj.kind !== undefined && !ORGANIZER_KINDS.includes(obj.kind)) {
     findings.push({ rule: 'invalid-organizer-kind', message: `organizer.kind 이 알려진 조직자 종류 밖입니다: ${obj.kind}`, objectId: obj.id });
+  }
+
+  // columns — 자식까지 **여기서 재귀 검증**한다(ValidateObjectTree 는 최상위만 순회하므로, 자식
+  // 규칙을 다른 곳에 두면 트리 깊이에 따라 게이트가 새는 구멍이 생긴다). 열은 2~3개, 각 열은 flow
+  // 개체 배열. 중첩 columns·page-break·shape·std-box 는 자식으로 허용하지 않는다(조판 단위가 깨지거나
+  // 슬롯 불변이 흐려진다).
+  if (type === 'columns' && obj.children !== undefined) {
+    const cols = obj.children;
+    if (!Array.isArray(cols) || cols.length < 2 || cols.length > 3 || !cols.every(Array.isArray)) {
+      findings.push({ rule: 'invalid-columns', message: 'columns.children 은 열 2~3개의 배열(각 열은 개체 배열)이어야 합니다.', objectId: obj.id });
+    } else {
+      cols.forEach((col, ci) => {
+        col.forEach((child, i) => {
+          const ct = child?.type;
+          if (['columns', 'page-break', 'shape', 'std-box'].includes(ct)) {
+            findings.push({ rule: 'columns-child-forbidden', message: `columns 안에는 '${ct}' 를 둘 수 없습니다(열 ${ci + 1}, ${i + 1}번째).`, objectId: obj.id });
+            return;
+          }
+          const sub = validateObjectShape(child);
+          for (const f of sub.findings) findings.push({ ...f, parentId: obj.id, column: ci });
+          if (child && child.placement !== undefined && child.placement !== 'flow') {
+            findings.push({ rule: 'columns-child-placement', message: `columns 의 자식은 placement:'flow' 여야 합니다(열 ${ci + 1}).`, objectId: child.id ?? null, parentId: obj.id });
+          }
+        });
+      });
+    }
+    if (obj.ratio !== undefined && !(Array.isArray(obj.ratio) && obj.ratio.every((r) => typeof r === 'number' && r > 0))) {
+      findings.push({ rule: 'invalid-columns', message: 'columns.ratio 는 양수 배열이어야 합니다(예: [1, 1] · [2, 1]).', objectId: obj.id });
+    }
   }
 
   return { ok: findings.length === 0, findings };

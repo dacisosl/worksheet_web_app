@@ -110,7 +110,7 @@ for (const bucket of buckets.values()) {
 // 그것을 few-shot 으로 주면 모델이 **개체 카탈로그를 우회하도록** 배운다. 예시는
 // worksheet-json-spec.md 를 그대로 따르는 것만 두고, 바꿀 때마다 아래로 검증한다.
 //   node tools/check-authored-json.mjs gem/knowledge/example-worksheet-<과목>.json
-const EXAMPLES = ['example-worksheet-science.json', 'example-worksheet-social.json'];
+const EXAMPLES = ['example-worksheet-science.json', 'example-worksheet-social.json', 'example-worksheet-math.json'];
 for (const name of EXAMPLES) {
   const file = join(OUT_DIR, name);
   if (!existsSync(file)) {

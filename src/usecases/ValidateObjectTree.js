@@ -110,7 +110,11 @@ export class ValidateObjectTree {
   #checkAdvisories(document, findings) {
     const pages = Array.isArray(document.pages) ? document.pages : [];
     pages.forEach((page, pageIndex) => {
-      const items = [...(Array.isArray(page?.flow) ? page.flow : []), ...(Array.isArray(page?.float) ? page.float : [])];
+      // columns 자식까지 평평하게 펼친다 — 권고도 깊이에 따라 빠지면 안 된다.
+      const flatten = (list) => list.flatMap((o) => (
+        o?.type === 'columns' && Array.isArray(o.children) ? o.children.flatMap((c) => flatten(Array.isArray(c) ? c : [])) : [o]
+      ));
+      const items = flatten([...(Array.isArray(page?.flow) ? page.flow : []), ...(Array.isArray(page?.float) ? page.float : [])]);
       for (const obj of items) {
         if (!obj || obj.type !== 'passage-slot') continue;
         const hasBody = typeof obj.bodyHtml === 'string' && obj.bodyHtml.trim() !== '';

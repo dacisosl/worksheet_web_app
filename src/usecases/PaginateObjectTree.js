@@ -1,6 +1,7 @@
 import { RenderObjectTree } from './RenderObjectTree.js';
 import { resolvePaper, paperDims, paperMargins, COLUMN_GAP_MM } from './paper.js';
 import { normalizePageIdentity } from '../domain/schema/PageIdentity.js';
+import { MODE_TOKEN, Variant } from '../domain/index.js';
 
 // PaginateObjectTree — S2.5(M2) 페이지네이션 패스 모듈(06_plan_final.md 167~172행, D-A/R2-1).
 //
@@ -60,7 +61,8 @@ export function assignFlowToPages(items, availableHeightPx, opts = {}) {
   let cursor = 0;
   let column = 0;
   let page = 0;
-  for (const item of items) {
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
     // page-break 개체: 여기서 페이지를 강제로 끊는다(높이 0). 그리디 패킹만으로는 "여기서
     // 끊어라"를 표현할 방법이 없어 교사가 의도한 페이지 구성이 매 리플로우마다 되돌아갔다.
     // ⚠ 페이지 '용량'을 늘리지는 않는다 — 끊는 위치만 정한다. 넘치는 분량은 여전히 뒤로 밀린다.
@@ -72,11 +74,19 @@ export function assignFlowToPages(items, availableHeightPx, opts = {}) {
       continue;
     }
     const h = Math.max(0, Number(item?.heightPx) || 0);
+    // keepWithNext(소제목 등): 제목만 열 바닥에 남고 본문이 다음 열로 넘어가는 "고아 제목"을 막는다
+    // (실측: "② 두 직선의 평행과 수직" 이 1쪽 맨 아래에 홀로 남고 개념 상자는 2쪽으로 갔다).
+    // 자기는 들어가지만 바로 다음 개체까지는 안 들어가면, 다음 개체 자리에서 끊는 대신 제목 앞에서 끊는다.
+    let need = h;
+    if (item?.keepWithNext) {
+      const next = items[i + 1];
+      if (next && !next.breakBefore) need += Math.max(0, Number(next.heightPx) || 0);
+    }
     // cursor>0(현재 열에 이미 개체가 있음) 이고, 더하면 허용오차를 넘어 넘치면 -> 통째로 다음
     // 열로(열이 남아 있으면), 없으면 다음 페이지 첫 열로. cursor===0(열의 첫 개체)이면 그 개체
     // 혼자 용량을 넘겨도 분할 없이 그대로 싣는다(표 등 분할불가 개체가 "통째 이동"으로 최종
     // 착지하는 지점, R7).
-    if (cursor > 0 && cursor + h > availableHeightPx + tolerancePx) {
+    if (cursor > 0 && cursor + need > availableHeightPx + tolerancePx) {
       if (column + 1 < columns) column += 1;
       else { page += 1; column = 0; }
       cursor = 0;
@@ -212,12 +222,23 @@ export class PaginateObjectTree {
 
     // 측정용 단일 논리 flow 문서 — editMode:true 로 개체별 data-oid 래퍼를 방출해 실측 매핑(D-A §2).
     const measureDoc = { pagination: 'scaffold', pages: [{ flow: flatFlow, float: [] }] };
-    const { html } = this.renderer.execute(measureDoc, assets, meta, { editMode: true });
+    const { html: tokened } = this.renderer.execute(measureDoc, assets, meta, { editMode: true });
+    // **교사 벌 기준으로 잰다.** MODE_TOKEN 을 그대로 두면 `.answer{display:none}` 이 걸려 정답 상자가
+    // 0 으로 측정되고, 그 경계로 교사 벌을 찍으면 A4 를 넘쳐 Chrome 이 쪽을 임의로 쪼갠다(실측: 학생
+    // 5쪽 문서의 교사용이 7쪽). 정답이 보이는 상태로 재면 두 벌이 같은 쪽 경계를 갖고(학생용 "3쪽 5번"
+    // = 교사용 "3쪽 5번") 학생 벌은 정답 자리만큼 여유가 남을 뿐이다.
+    const html = tokened.split(MODE_TOKEN).join(Variant.TEACHER);
 
     // 측정은 어댑터 소관(document.fonts.ready + KaTeX onload 게이팅 이후에만 수행 — R2-1, 어댑터 계약).
     const { heights, gating } = await this.measurer.measure({ html, timeoutMs: opts.timeoutMs });
 
-    const items = flatFlow.map((obj) => ({ id: obj.id, heightPx: heights?.[obj.id] ?? 0, breakBefore: obj.type === 'page-break' }));
+    const items = flatFlow.map((obj) => ({
+      id: obj.id,
+      heightPx: heights?.[obj.id] ?? 0,
+      breakBefore: obj.type === 'page-break',
+      // 소제목은 다음 개체와 붙어 다닌다(고아 제목 방지 — assignFlowToPages 참조).
+      keepWithNext: obj.type === 'title' && obj.level === 2,
+    }));
     const availableHeightPx = computeAvailableHeightPx(meta.paper);
     const { pageOfId, pageCount } = assignFlowToPages(items, availableHeightPx, {
       tolerancePx: opts.tolerancePx,

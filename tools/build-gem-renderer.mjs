@@ -171,6 +171,11 @@ const promptSystem = readFileSync(join(ROOT, 'tools', 'ai-system-prompt.md'), 'u
 const promptSpec = readFileSync(join(ROOT, 'gem', 'knowledge', 'worksheet-json-spec.md'), 'utf8');
 const exampleText = readFileSync(join(ROOT, 'gem', 'knowledge', 'example-worksheet-science.json'), 'utf8');
 const exampleDoc = JSON.parse(exampleText);
+// 교과별 참고 예시 — 요청의 교과가 수학 계열이면 수학 예시(2단 문항·공식 callout·자기점검표)를,
+// 그 밖엔 과학 예시를 시스템 프롬프트에 싣는다. 모델은 예시의 조판 패턴을 그대로 흉내 내므로
+// 예시가 곧 결과물의 밀도를 정한다(실측: 예시 없는 수학 요청은 문항마다 한 줄씩 세로로 늘어졌다).
+const exampleMathText = readFileSync(join(ROOT, 'gem', 'knowledge', 'example-worksheet-math.json'), 'utf8');
+JSON.parse(exampleMathText); // 깨진 예시가 프롬프트에 실리는 일을 빌드에서 막는다
 
 /** 성취기준 대장 — 학교급/과목/학년을 인덱스로 접어 크기를 줄인다(원문은 손대지 않는다). */
 function buildStandardsIndex() {
@@ -218,7 +223,7 @@ const assetsJs = [
   `var WSG_ASSETS = ${JSON.stringify(assets)};`,
   `var WSG_THEMES = ${JSON.stringify(themes)};`,
   `var WSG_SAMPLE = ${JSON.stringify(exampleDoc)};`,
-  `var WSG_PROMPT = ${JSON.stringify({ system: promptSystem, spec: promptSpec, example: exampleText })};`,
+  `var WSG_PROMPT = ${JSON.stringify({ system: promptSystem, spec: promptSpec, examples: { general: exampleText, math: exampleMathText } })};`,
   `var WSG_STANDARDS = ${JSON.stringify(standards)};`,
 ].join('\n');
 

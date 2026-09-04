@@ -93,6 +93,10 @@ function stripAnswerObjects(objs) {
         const { answerKey, ...rest } = obj;
         return rest;
       }
+      // columns 자식도 같은 불변식을 받는다 — 트리 깊이가 정답 제거를 우회하는 길이 되면 안 된다.
+      if (obj?.type === 'columns' && Array.isArray(obj.children)) {
+        return { ...obj, children: obj.children.map((col) => stripAnswerObjects(Array.isArray(col) ? col : [])) };
+      }
       return obj;
     });
 }

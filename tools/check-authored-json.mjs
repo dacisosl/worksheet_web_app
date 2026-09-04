@@ -87,7 +87,11 @@ if (blocking) {
   process.exit(1);
 }
 
-const flow = normalized.document.pages.flatMap((p) => p.flow);
+// columns 자식까지 펼쳐 센다(2단 문항도 문항이다).
+const flatten = (list) => list.flatMap((o) => (
+  o?.type === 'columns' && Array.isArray(o.children) ? o.children.flatMap((c) => flatten(Array.isArray(c) ? c : [])) : [o]
+));
+const flow = flatten(normalized.document.pages.flatMap((p) => p.flow));
 const questions = flow.filter((o) => o.type === 'question');
 const withKey = questions.filter((o) => o.answerKey);
 console.log(`\n✔ 통과 — 개체 ${flow.length}개 · 문항 ${questions.length}개(정답 있는 문항 ${withKey.length}개) · 테마 ${theme}`);
@@ -98,4 +102,28 @@ if (htmlPrefix) {
   writeFileSync(`${htmlPrefix}-student.html`, variants.student, 'utf8');
   writeFileSync(`${htmlPrefix}-teacher.html`, variants.teacher, 'utf8');
   console.log(`  → ${htmlPrefix}-student.html / ${htmlPrefix}-teacher.html`);
+}
+
+// --pdf <prefix>: 웹앱과 같은 **쪽 나눔 경로**로 A4 PDF 2벌을 만든다(Chrome 필요).
+// 위의 --html 은 쪽 나눔 없이 한 장짜리 sheet 를 그대로 쓴 것이라 머리글·꼬리글이 첫/끝에만 붙는다 —
+// 인쇄물 비교는 반드시 이 경로로 한다(PaginateObjectTree + Chrome 측정 어댑터 → BuildVariants → PDF).
+const pdfIdx = args.indexOf('--pdf');
+if (pdfIdx !== -1) {
+  const prefix = args[pdfIdx + 1];
+  const [{ PaginateObjectTree }, { ChromePaginationMeasurer }, { ChromeRenderer }, { RenderPdf }] = await Promise.all([
+    import('../src/usecases/PaginateObjectTree.js'),
+    import('../src/adapters/PaginationMeasurer.js'),
+    import('../src/adapters/ChromeRenderer.js'),
+    import('../src/usecases/RenderPdf.js'),
+  ]);
+  const paginator = new PaginateObjectTree({ measurer: new ChromePaginationMeasurer() });
+  const { document: paginated } = await paginator.execute(normalized.document, assets, meta);
+  const pagedVariants = new BuildVariants().executeObjectTree(paginated, assets, meta);
+  const renderPdf = new RenderPdf({ renderer: new ChromeRenderer() });
+  for (const [mode, html] of [['student', pagedVariants.student], ['teacher', pagedVariants.teacher]]) {
+    const inputPath = `${prefix}-${mode}.paged.html`;
+    writeFileSync(inputPath, html, 'utf8');
+    await renderPdf.execute({ inputPath, outputPath: `${prefix}-${mode}.pdf` });
+  }
+  console.log(`  쪽 나눔 ${paginated.pages.length}쪽 → ${prefix}-student.pdf / ${prefix}-teacher.pdf`);
 }

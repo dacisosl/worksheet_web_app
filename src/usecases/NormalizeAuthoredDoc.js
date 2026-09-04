@@ -26,6 +26,7 @@ const TYPE_ALIASES = Object.freeze({
   pagebreak: 'page-break', hr: 'divider', separator: 'divider', rule: 'divider',
   box: 'callout', tip: 'callout', warning: 'callout', summary: 'callout',
   graphicorganizer: 'organizer', diagram: 'organizer',
+  row: 'columns', twocol: 'columns', twocolumns: 'columns', grid: 'columns', sidebyside: 'columns', cols: 'columns',
 });
 
 const ALWAYS_ALLOWED = ['id', 'type', 'placement', 'rect', 'opacity', 'angle'];
@@ -86,10 +87,44 @@ function normalizeBucket(list, bucket, ctx) {
     normalizeTable(obj, ctx);
     normalizeQuestion(obj, ctx);
     normalizeAnswerFlag(obj);
+    normalizeMathInHtml(obj, ctx);
+    normalizeColumns(obj, ctx);
     dropUnknownFields(obj, ctx);
 
     return obj;
   });
+}
+
+/** HTML 을 담는 필드 — 이 안의 `$…$` 수식에 든 `<`/`>` 는 브라우저가 태그로 읽어 수식과 뒤 문장을
+ *  통째로 삼킨다(실측: `$d<r$ 서로 다른…$d>r$` 이 "$dr$" 로 무너졌다). */
+const HTML_FIELDS = ['html', 'body', 'promptHtml', 'textHtml', 'titleHtml', 'bodyHtml'];
+
+function normalizeMathInHtml(obj, ctx) {
+  let touched = false;
+  for (const field of HTML_FIELDS) {
+    const v = obj[field];
+    if (typeof v !== 'string' || v.indexOf('$') === -1) continue;
+    const fixed = v.replace(/\$([^$\n]{1,200}?)\$/g, (m, inner) => {
+      if (!/[<>]/.test(inner)) return m;
+      touched = true;
+      return '$' + inner.replace(/</g, '\\lt ').replace(/>/g, '\\gt ') + '$';
+    });
+    if (fixed !== v) obj[field] = fixed;
+  }
+  if (touched) ctx.notes.push(`\`${obj.id}\` 의 수식 안 \`<\`/\`>\` 를 \`\\lt\`/\`\\gt\` 로 바꿨습니다(HTML 태그로 읽히는 것을 막기 위해).`);
+}
+
+/** columns 자식도 같은 정규화를 받는다(id·answerKey 모양·표 셀…). 챗봇이 `children:[q1,q2]` 처럼
+ *  열 배열을 빼먹고 평평하게 내면 개체마다 한 열로 감싼다(뜻은 그대로 — "나란히"). */
+function normalizeColumns(obj, ctx) {
+  if (obj.type !== 'columns' || !Array.isArray(obj.children)) return;
+  const cols = obj.children;
+  const flat = cols.length > 0 && cols.every((c) => c && typeof c === 'object' && !Array.isArray(c));
+  if (flat) {
+    obj.children = cols.map((c) => [c]);
+    ctx.notes.push(`\`${obj.id}\` 의 children 이 개체 목록이라 개체마다 한 열로 감쌌습니다(${cols.length}열).`);
+  }
+  obj.children = obj.children.map((col) => normalizeBucket(Array.isArray(col) ? col : [col], 'flow', ctx));
 }
 
 function normalizeType(obj, ctx) {

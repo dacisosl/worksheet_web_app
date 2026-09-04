@@ -160,7 +160,14 @@ export async function measureFlow(flatFlow, { renderMeta, styleTag, timeoutMs = 
 export function applyReflow(document, heights, opts = {}) {
   const srcPages = Array.isArray(document?.pages) ? document.pages : [];
   const flatFlow = flattenFlow(document);
-  const items = flatFlow.map((obj) => ({ id: obj.id, heightPx: heights?.[obj.id] ?? 0, breakBefore: obj.type === 'page-break' }));
+  // PaginateObjectTree.execute 와 같은 items 계약(keepWithNext 포함) — 편집기 리플로우와 인쇄 경계가
+  // 같아야 한다(R2-1). 소제목 고아 방지 규칙이 한쪽에만 있으면 편집 화면과 PDF 의 쪽이 갈린다.
+  const items = flatFlow.map((obj) => ({
+    id: obj.id,
+    heightPx: heights?.[obj.id] ?? 0,
+    breakBefore: obj.type === 'page-break',
+    keepWithNext: obj.type === 'title' && obj.level === 2,
+  }));
   const availableHeightPx = computeAvailableHeightPx(document?.paper ?? null);
   const { pageOfId, pageCount } = assignFlowToPages(items, availableHeightPx, {
     tolerancePx: opts.tolerancePx,

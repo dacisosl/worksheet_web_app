@@ -68,8 +68,10 @@ dt { font-weight: 700; color: var(--cink); font-size: 9.5pt; margin-top: 5px; }
 dd { margin: 2px 0 0 14px; font-size: 9.5pt; color: #333; line-height: 1.55; }
 
 /* ---- directive (활동 지시문) ---- 교과별 글리프는 data-subject 분기 ---- */
-.direct { display: flex; gap: 8px; align-items: flex-start; margin: 7mm 0 3mm; font-weight: 700; font-size: 11pt; }
-.direct::before { content: "◐"; color: var(--c); font-size: 13pt; line-height: 1; margin-top: 1px; }
+/* 지시문 — flex 로 두면 본문 안의 <b>…</b> 조각마다 flex 항목이 되어 문장이 열처럼 갈라진다(실측:
+   "공식을 먼저 눈으로 확인 | 하고, 바로 아래…" 로 4토막). 아이콘은 절대배치, 본문은 보통 흐름으로. */
+.direct { position: relative; padding-left: 22px; margin: 7mm 0 3mm; font-weight: 700; font-size: 11pt; line-height: 1.5; }
+.direct::before { content: "◐"; position: absolute; left: 0; top: 1px; color: var(--c); font-size: 13pt; line-height: 1; }
 body[data-subject="science"] .direct::before,
 body[data-subject="sci"] .direct::before { content: "🔬"; color: initial; font-size: 12pt; margin-top: 0; }
 .qnum { display: inline-flex; align-items: center; justify-content: center;
@@ -257,6 +259,16 @@ body[data-subject="sci"] .direct::before { content: "🔬"; color: initial; font
   white-space: pre-wrap;
   overflow-wrap: break-word;
 }
+
+/* ---- 다단 배치(columns 개체) ----
+ * 열은 grid 로 나란히, 열 안의 상자(.qbox 등)는 서로 같은 높이로 늘린다 — 옆 문항과 바닥이 맞아야
+ * 인쇄물이 정돈돼 보인다. 조판 단위는 columns 하나(분할 불가 — 표와 같다). */
+.wg-cols { display: grid; grid-template-columns: repeat(var(--wg-cols, 2), minmax(0, 1fr)); gap: 4mm;
+  margin: 2mm 0; align-items: stretch; break-inside: avoid; page-break-inside: avoid; }
+.wg-cols[data-cols="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.wg-cols > .wg-col { min-width: 0; display: flex; flex-direction: column; gap: 2mm; }
+.wg-cols > .wg-col > .qbox, .wg-cols > .wg-col > .wg-obj > .qbox { flex: 1; margin-top: 0; }
+.wg-cols > .wg-col > .callout, .wg-cols > .wg-col > .obj-table { margin-top: 0; }
 
 /* ---- numbered section heading (공통) ---- */
 h2.sec { display: flex; align-items: center; gap: 8px; font-size: 12pt; margin: 3mm 0 1.5mm; }
