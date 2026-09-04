@@ -1,0 +1,137 @@
+{
+  "docTitle": "아시아의 종교 경관 — 지도에서 문화를 읽다",
+  "subject": "사회",
+  "themeName": "social",
+  "lang": "ko",
+  "runHead": "2022 개정 교육과정 · 중학교 사회 · 아시아의 지역 특성",
+  "runFoot": { "left": "중학교 사회 활동지", "rightPrefix": "아시아의 종교 경관" },
+  "paper": { "size": "a4", "orientation": "portrait" },
+  "standards": [
+    {
+      "code": "[9사(지리)02-01]",
+      "text": "다양한 지리 정보와 매체를 활용하여 아시아의 국가와 주요 도시의 위치를 파악하고 자연환경의 특성을 지도로 표현한다."
+    },
+    {
+      "code": "[9사(지리)02-02]",
+      "text": "종교와 관련된 아시아의 다양한 문화경관과 생활양식을 파악하고, 세계시민으로서 문화 다양성에 대한 이해와 수용성을 높인다."
+    }
+  ],
+  "pages": [
+    {
+      "flow": [
+        {
+          "type": "title",
+          "level": 1,
+          "text": "아시아의 종교 경관 — 지도에서 문화를 읽다",
+          "meta": { "pill": "아시아의 지역 특성", "page": "중학교 사회" }
+        },
+        {
+          "type": "richtext",
+          "html": "<div class='unit-line'><div class='unit'><b>단원</b>　아시아의 지역 특성 — 종교와 문화경관</div><div class='namefield'>학년<span></span> 반<span></span> 이름<span></span></div></div>"
+        },
+        {
+          "type": "std-box",
+          "codes": ["[9사(지리)02-01]", "[9사(지리)02-02]"],
+          "objectives": [
+            "아시아 주요 지역의 대표 종교와 그 분포를 지도에서 찾아 말할 수 있다.",
+            "종교가 건축물·음식·복장 등 생활양식에 어떻게 드러나는지 사례로 설명할 수 있다.",
+            "문화가 다른 사람과 함께 살아가는 태도를 자기 말로 표현할 수 있다."
+          ]
+        },
+        {
+          "type": "richtext",
+          "html": "<div class='direct'>같은 아시아 안에서도 지역마다 다른 종교 경관이 나타난다. 지도와 사진 자료를 살펴보며 종교가 사람들의 생활에 남긴 흔적을 찾아보자.</div>"
+        },
+        { "type": "title", "level": 2, "text": "활동 1 · 종교 분포를 지도에서 확인하기" },
+        {
+          "type": "image-slot",
+          "alt": "아시아 종교 분포 지도(교과서 또는 지도 서비스 자료를 붙일 자리)",
+          "caption": "아시아의 종교 분포"
+        },
+        {
+          "type": "question",
+          "qnum": 1,
+          "qtype": "matching",
+          "prompt": "다음 지역과 가장 널리 믿는 종교를 알맞게 연결해 보자.",
+          "left": [
+            { "text": "서남아시아(사우디아라비아 등)" },
+            { "text": "동남아시아 일부(타이·미얀마)" },
+            { "text": "남아시아(인도)" },
+            { "text": "동아시아(한국·일본·중국)" }
+          ],
+          "right": [
+            { "text": "불교" },
+            { "text": "이슬람교" },
+            { "text": "유교·불교 등 여러 종교" },
+            { "text": "힌두교" }
+          ],
+          "answerKey": {
+            "text": "서남아시아-이슬람교, 동남아시아 일부-불교, 남아시아-힌두교, 동아시아-유교·불교 등 여러 종교"
+          }
+        },
+        { "type": "title", "level": 2, "text": "활동 2 · 생활 속에 남은 종교의 흔적" },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "문화경관이란",
+          "body": "<p>사람들이 자연환경 위에 만들어 놓은 <b>생활의 흔적</b>을 뜻한다. 건축물, 밭의 모양, 시장의 물건, 사람들의 옷차림까지 모두 문화경관이다.</p>"
+        },
+        {
+          "type": "table",
+          "splittable": false,
+          "headerRows": 1,
+          "caption": "종교가 드러나는 생활 모습 정리표",
+          "rows": [
+            [
+              { "text": "종교", "header": true, "w": 20, "align": "center" },
+              { "text": "대표적인 건축물", "header": true, "w": 26 },
+              { "text": "음식·복장에서 보이는 특징", "header": true, "w": 54 }
+            ],
+            [{ "text": "이슬람교", "align": "center", "h": 14 }, { "text": "" }, { "text": "" }],
+            [{ "text": "불교", "align": "center", "h": 14 }, { "text": "" }, { "text": "" }],
+            [{ "text": "힌두교", "align": "center", "h": 14 }, { "text": "" }, { "text": "" }]
+          ]
+        },
+        {
+          "type": "question",
+          "qnum": 2,
+          "qtype": "multiple-choice",
+          "prompt": "위 표를 채우며 알게 된 내용으로 알맞지 <b>않은</b> 것은?",
+          "promptHtml": "위 표를 채우며 알게 된 내용으로 알맞지 <b>않은</b> 것은?",
+          "choices": [
+            { "text": "종교는 건축물의 모양에 영향을 준다." },
+            { "text": "종교에 따라 먹지 않는 음식이 있을 수 있다." },
+            { "text": "한 지역에는 반드시 한 가지 종교만 존재한다." },
+            { "text": "종교는 사람들의 옷차림에도 영향을 준다." }
+          ],
+          "answerKey": { "text": "③ — 한 지역 안에도 여러 종교가 함께 존재한다." }
+        },
+        { "type": "title", "level": 2, "text": "활동 3 · 두 지역을 비교하기" },
+        {
+          "type": "organizer",
+          "kind": "venn",
+          "params": { "circles": 2 },
+          "labels": { "left": "서남아시아", "right": "동남아시아", "common": "공통점" }
+        },
+        {
+          "type": "question",
+          "qnum": 3,
+          "qtype": "essay",
+          "lines": 4,
+          "prompt": "위 벤다이어그램을 바탕으로, 두 지역의 종교 경관이 다르게 나타나는 이유를 자연환경이나 역사와 연결해 설명해 보자.",
+          "answerKey": {
+            "text": "건조한 서남아시아는 이슬람교의 발상지로 교역로를 따라 종교가 퍼졌고, 계절풍 기후의 동남아시아는 인도·중국과의 교류 속에서 불교가 널리 퍼졌다는 식으로 설명하면 된다."
+          }
+        },
+        { "type": "divider" },
+        {
+          "type": "question",
+          "qnum": 4,
+          "qtype": "essay",
+          "lines": 3,
+          "prompt": "나와 다른 종교나 문화를 가진 사람과 함께 지낼 때, 내가 지키고 싶은 태도를 한 가지 정하고 그 이유를 써 보자."
+        }
+      ]
+    }
+  ]
+}

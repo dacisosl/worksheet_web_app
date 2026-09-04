@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>활동지 렌더러 · worksheet-grab __WSG_VERSION__</title>
+<style>
+  :root {
+    --ink: #1f2328; --muted: #656d76; --line: #d8dee4; --bg: #f6f8fa;
+    --ok: #1a7f37; --warn: #9a6700; --err: #cf222e; --accent: #0969da;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font-family: "Pretendard", "Malgun Gothic", "맑은 고딕", system-ui, sans-serif;
+    color: var(--ink); background: var(--bg); font-size: 14px; line-height: 1.5;
+    display: flex; flex-direction: column; word-break: keep-all;
+  }
+  header {
+    display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+    padding: 10px 16px; background: #fff; border-bottom: 1px solid var(--line);
+  }
+  header h1 { font-size: 15px; margin: 0; }
+  header .ver { color: var(--muted); font-size: 12px; }
+  header .hint { color: var(--muted); font-size: 12px; margin-left: auto; }
+  main { flex: 1; display: grid; grid-template-columns: minmax(320px, 34%) 1fr; min-height: 0; }
+  .pane { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+  .pane.left { border-right: 1px solid var(--line); background: #fff; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+  .row.grow { flex: 1; min-height: 0; padding: 0; display: block; }
+  textarea {
+    width: 100%; height: 100%; border: 0; padding: 12px; resize: none; outline: none;
+    font-family: ui-monospace, Consolas, "Courier New", monospace; font-size: 12px; line-height: 1.5;
+  }
+  textarea.drop { background: #eaf5ff; }
+  button {
+    font: inherit; padding: 6px 12px; border: 1px solid var(--line); border-radius: 6px;
+    background: #fff; cursor: pointer;
+  }
+  button:hover:not(:disabled) { background: var(--bg); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  button.primary:hover:not(:disabled) { background: #0860ca; }
+  button:disabled { opacity: .45; cursor: default; }
+  label.file { display: inline-flex; align-items: center; }
+  label.file input { display: none; }
+  select { font: inherit; padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+  .tabs { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+  .tabs button { border: 0; border-radius: 0; padding: 6px 14px; }
+  .tabs button[aria-selected="true"] { background: var(--ink); color: #fff; }
+  #log { max-height: 34vh; overflow: auto; padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 12.5px; }
+  #log:empty { display: none; }
+  #log p { margin: 3px 0; }
+  #log .t-ok { color: var(--ok); }
+  #log .t-warn { color: var(--warn); }
+  #log .t-err { color: var(--err); font-weight: 600; }
+  #log .t-muted { color: var(--muted); }
+  #log code { background: var(--bg); padding: 0 3px; border-radius: 3px; }
+  #frameWrap { flex: 1; min-height: 0; background: #eee; position: relative; }
+  #frame { width: 100%; height: 100%; border: 0; background: #eee; }
+  #empty {
+    position: absolute; inset: 0; display: grid; place-content: center; text-align: center;
+    color: var(--muted); font-size: 13px; padding: 20px; pointer-events: none;
+  }
+  #measure { position: fixed; left: -12000px; top: 0; width: 900px; height: 1400px; border: 0; visibility: hidden; }
+  .pill { font-size: 11.5px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; }
+  .row.ai { gap: 6px; background: #fbfcfd; }
+  #ask { flex: 1; min-width: 160px; font: inherit; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; }
+  #ask:focus { outline: 2px solid #b6dbff; outline-offset: -1px; }
+  #keyPanel { display: block; background: #fbfcfd; font-size: 12.5px; color: var(--muted); }
+  #keyPanel .line { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
+  #keyPanel input[type="password"], #modelFilter { flex: 1; min-width: 150px; font: inherit;
+    padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; }
+  #keyPanel input[type="password"] { font-family: ui-monospace, Consolas, monospace; }
+  #modelSel { max-width: 46%; }
+  #keyPanel a { color: var(--accent); }
+  #keyPanel .warn { color: var(--warn); }
+  .spin { display: inline-block; width: 11px; height: 11px; border: 2px solid #c9d4e0; border-top-color: var(--accent);
+    border-radius: 50%; animation: sp .7s linear infinite; vertical-align: -1px; margin-right: 5px; }
+  @keyframes sp { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<header>
+  <h1>활동지 렌더러</h1>
+  <span class="ver">worksheet-grab __WSG_VERSION__ · 학생용/교사용 분기 · A4 인쇄</span>
+  <span class="hint">챗봇이 준 활동지 JSON을 붙여넣고 <b>검사·조판</b> → <b>인쇄</b>에서 “PDF로 저장”</span>
+</header>
+
+<main>
+  <section class="pane left">
+    <div class="row ai">
+      <input id="ask" type="text" placeholder="예: 중2 과학 옴의 법칙 활동지 만들어줘" autocomplete="off">
+      <button id="btnAsk" class="primary">AI로 만들기</button>
+      <button id="btnNew" title="대화 맥락을 비우고 새 활동지부터 시작">새로</button>
+      <button id="btnKeyToggle" title="API 키·모델 설정">⚙</button>
+    </div>
+    <div id="keyPanel" class="row" hidden>
+      <div class="line">
+        <label for="providerSel">서비스</label>
+        <select id="providerSel">
+          <option value="gemini">Google Gemini API</option>
+          <option value="openrouter">OpenRouter</option>
+        </select>
+        <span id="keyHint"></span>
+      </div>
+      <div class="line">
+        <input id="apiKey" type="password" placeholder="AIza…" autocomplete="off" spellcheck="false">
+        <button id="btnKeySave">저장</button>
+        <button id="btnKeyClear">지우기</button>
+      </div>
+      <div class="line">
+        <label for="modelSel">모델</label>
+        <select id="modelSel"><option value="">[목록 새로고침] 을 누르세요</option></select>
+        <input id="modelFilter" type="text" placeholder="모델 검색 (flash, free, claude…)" autocomplete="off">
+        <button id="btnModelReload">목록 새로고침</button>
+      </div>
+      <div>
+        키는 <b>이 브라우저에만</b> 저장되고 선택한 서비스로만 전송됩니다. 공용 PC 에서는 쓰고 나서 [지우기]를 누르세요.
+        <span class="warn">· 학생 실명·개인정보는 입력하지 마세요.</span>
+      </div>
+    </div>
+    <div class="row">
+      <button id="btnRun" class="primary">검사 · 조판</button>
+      <label class="file"><button type="button" onclick="this.parentNode.querySelector('input').click()">파일 열기</button><input id="fileIn" type="file" accept=".json,.txt,application/json"></label>
+      <button id="btnSample">예시 넣기</button>
+      <button id="btnClear">비우기</button>
+    </div>
+    <div class="row grow"><textarea id="src" spellcheck="false" placeholder='{ "docTitle": "…", "themeName": "sci", "pages": [ { "flow": [ … ] } ] }'></textarea></div>
+  </section>
+
+  <section class="pane">
+    <div class="row">
+      <span class="tabs">
+        <button id="tabStudent" aria-selected="true">학생용</button>
+        <button id="tabTeacher" aria-selected="false">교사용</button>
+      </span>
+      <button id="btnPrint" disabled>인쇄 (PDF로 저장)</button>
+      <button id="btnSaveHtml" disabled>HTML 저장</button>
+      <span id="pageInfo" class="pill" hidden></span>
+    </div>
+    <div id="log"></div>
+    <div id="frameWrap">
+      <iframe id="frame" title="활동지 미리보기"></iframe>
+      <div id="empty">왼쪽에 활동지 JSON을 붙여넣고 <b>검사 · 조판</b>을 누르세요.</div>
+    </div>
+  </section>
+</main>
+
+<iframe id="measure" title="측정용" aria-hidden="true"></iframe>
+
+<script>
+/*__WSG_ASSETS__*/
+</script>
+<script>
+/*__WSG_BUNDLE__*/
+</script>
+<script>
+/*__WSG_APP__*/
+</script>
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>worksheet-grab — 에디터</title>
+<link rel="icon" href="data:,"><!-- favicon 자동 요청 404 소음 제거 -->
+<link rel="stylesheet" href="/editor/editor.css">
+</head>
+<body>
+<!-- editor-v4 S4.3(신 UI 셸) — 앱 바 / 컨텍스트 툴바 / 좌 3탭 / 캔버스 / 우 인스펙터.
+     아이콘은 /editor/icons.js 의 인라인 SVG(Lucide 스타일, 16px stroke) — 외부 CDN 없음.
+     실제 배선은 /editor/editor.js 가 각 모듈(leftPanel/inspector/contextToolbar/canvasInline)을
+     조립한다. AI UX(preview-then-commit·diff·프리셋)는 US-19 몫 — 진입점 자리만 예약한다. -->
+<div id="chrome">
+  <header class="appbar">
+    <div class="appbar-left">
+      <span class="logo">worksheet-grab</span>
+      <span id="doc-title" class="doc-title" tabindex="0" role="textbox" aria-label="문서 제목(클릭해서 편집)">문서 로드 중…</span>
+      <span id="doc-rev" class="badge"></span>
+    </div>
+    <div class="appbar-center">
+      <div class="seg" role="tablist" aria-label="학생/교사 토글">
+        <button id="btn-teacher" class="seg-btn active" role="tab">교사용 (편집)</button>
+        <button id="btn-student" class="seg-btn" role="tab">학생용 (보기)</button>
+      </div>
+    </div>
+    <div class="appbar-right">
+      <button id="btn-review" class="review-chip" data-review-status="unknown" title="검수 상태 — 클릭 시 인스펙터에 상세">검수 확인 중…</button>
+      <button id="btn-preview" class="appbar-btn" title="정밀 미리보기(PNG)">PNG 미리보기</button>
+      <button id="btn-export" class="appbar-btn" title="PDF 내보내기(학생/교사 2벌)">PDF 내보내기</button>
+      <span id="ai-entry-slot" class="ai-entry-slot"></span><!-- US-19: ai.js 가 AI 진입 버튼을 여기에 마운트한다 -->
+      <button id="btn-help" class="appbar-btn" title="키보드 단축키 안내" aria-label="키보드 단축키 안내">단축키</button>
+      <button id="btn-save" class="save-btn">저장 <kbd>Ctrl+S</kbd></button>
+    </div>
+  </header>
+  <div id="context-toolbar" class="context-toolbar" role="toolbar" aria-label="컨텍스트 툴바">
+    <div id="tb-left" class="tb-section"></div>
+    <div id="tb-middle" class="tb-section tb-middle"></div>
+    <div id="tb-right" class="tb-section"></div>
+  </div>
+  <div id="save-banner" class="save-banner hidden" role="status"></div>
+</div><!-- /#chrome -->
+<div id="workspace">
+  <aside id="left-panel" class="left-panel">
+    <div class="tab-bar" role="tablist" aria-label="좌측 패널 탭">
+      <button data-tab="pages" class="tab-btn active" role="tab">페이지</button>
+      <button data-tab="layers" class="tab-btn" role="tab">레이어</button>
+      <button data-tab="insert" class="tab-btn" role="tab">삽입</button>
+      <button data-tab="myblocks" class="tab-btn" role="tab">내 블록</button>
+    </div>
+    <div data-panel="pages" class="panel">
+      <ul id="thumb-list" class="thumb-list"></ul>
+      <button id="btn-add-page" type="button" class="panel-add-btn">+ 새 페이지</button>
+    </div>
+    <div data-panel="layers" class="panel hidden">
+      <p class="layer-hint">현재 페이지의 개체 목록 — 클릭해 선택, 자유 배치는 ▲▼로 앞뒤 순서 변경</p>
+      <ul id="layer-list" class="layer-list"></ul>
+    </div>
+    <div data-panel="insert" class="panel hidden">
+      <label class="insert-float-toggle"><input type="checkbox" id="insert-float-toggle"> 자유 배치로 삽입</label>
+      <div id="insert-grid" class="insert-grid"></div>
+      <div class="insert-section-head">시각 조직자</div>
+      <div id="organizer-grid" class="insert-grid"></div>
+    </div>
+    <div data-panel="myblocks" class="panel hidden">
+      <ul id="preset-list" class="preset-list"></ul>
+    </div>
+  </aside>
+  <main id="canvas-wrap">
+    <div id="stage"></div>
+  </main>
+  <aside id="right-panel" class="right-panel" aria-label="인스펙터"></aside>
+</div><!-- /#workspace -->
+<div id="popups-host"></div><!-- 버블 툴바·슬래시 메뉴·우클릭 메뉴(부모 문서 fixed 오버레이) -->
+<div id="export-result" class="export-result hidden" role="status"></div><!-- #5 내보내기 결과 토스트(열기 버튼) -->
+<div id="preview-modal" class="preview-modal hidden">
+  <div class="preview-modal-inner">
+    <button id="preview-close" type="button" class="preview-close">닫기</button>
+    <div id="preview-status" class="preview-status hidden"></div>
+    <img id="preview-img" alt="정밀 미리보기">
+  </div>
+</div>
+<script type="module" src="/editor/editor.js"></script>
+</body>
+</html>

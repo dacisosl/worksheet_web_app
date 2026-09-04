@@ -1,0 +1,480 @@
+/* ===== 블록 컴포넌트 스타일 (전 교과 공유) =====
+ * 규칙: 교과색은 반드시 var(--c/--c2/--clite/--cstrip/--clabel/--cink) 로만 참조.
+ *       이 파일에는 교과 팔레트 hex(7cb342 등)를 절대 쓰지 않는다.
+ * 예외(교과 무관 고정색): 정답 하이라이트(#1a5fb4), 찬반 의미색(핑크/블루),
+ *       별점 골드(#f0a500), 슬롯 오렌지 — themes.md 규정.
+ * 교과별로 달라지는 아이콘/글리프는 body[data-subject="..."] 로 분기.
+ */
+
+/* ---- header (단원 헤더) ---- */
+.wsheet-title-wrap, .title-wrap { position: relative; margin-bottom: 6mm; }
+.pill { display: inline-block; background: var(--c); color: #fff; font-weight: 700;
+  font-size: 10.5pt; padding: 3px 16px; border-radius: 20px; margin-bottom: 5px; }
+.corner-ref { position: absolute; top: 2px; right: 0; font-size: 8.5pt; color: #555;
+  background: var(--clite); padding: 2px 8px; border-radius: 4px; }
+.title-box { border: 2.2px solid var(--c2); border-radius: 14px; padding: 12px 18px;
+  text-align: center; background: var(--clite); }
+.title-box h1 { margin: 0; font-size: 20pt; font-weight: 800; letter-spacing: -.5px; color: var(--cink); }
+/* 출처 표기 — 렌더는 계속 방출하는데 스타일이 없어 본문과 같은 크기의 맨 글자로 붙어 있었다
+   (실 Chrome 관측). 제목 아래 보조 정보로 읽히도록 작게·흐리게·오른쪽에 둔다. */
+.title-src { margin-top: 3px; font-size: 8.7pt; color: #666; text-align: right; }
+.unit-line { display: flex; align-items: center; gap: 10px; margin-top: 5mm; font-size: 9.5pt; }
+.unit-line .unit { flex: 1; }
+.unit-line .unit b { color: var(--cink); }
+.namefield { color: #555; white-space: nowrap; }
+.namefield span { display: inline-block; border-bottom: 1px solid #999; width: 46px; margin: 0 2px; }
+
+/* ---- standard-label (성취기준 라벨) ---- */
+.std-box { margin: 4mm 0 0; border: 1px solid #cbd5c0; border-radius: 8px; overflow: hidden; }
+.std-box .std-head { background: var(--clite); color: var(--cink); font-weight: 700; font-size: 9pt;
+  padding: 4px 12px; border-bottom: 1px solid #cbd5c0; }
+.std-box ul { margin: 0; padding: 7px 14px 7px 30px; }
+.std-box li { font-size: 9pt; margin: 2px 0; color: #333; }
+.std-box li b { color: var(--c); margin-right: 4px; }
+.std-box + .std-box { margin-top: 2mm; }
+
+/* 강조상자(callout, M4) — flow 개체. 상단 색 헤더밴드 + 본문 박스(이 활동지의 .std-box/.strip 과
+ * 동형 디자인 — 왼쪽 세로띠 같은 제네릭 룩 배제). note 는 교과색(var), 나머지는 교과 팔레트와 무관한
+ * 무채색 계열 고정색(hardcoded-subject-color 회피). 편집==인쇄 동일 선언. */
+.callout { border: 1.4px solid var(--c2); border-radius: 8px; overflow: hidden; margin-top: 3mm; background: #fff; }
+.callout-head { font-weight: 700; font-size: 9pt; padding: 5px 12px; letter-spacing: -.2px; }
+.callout-body { padding: 8px 13px; font-size: 9.5pt; line-height: 1.6; color: #2f2f2f; }
+.callout-body p { margin: 4px 0; }
+.callout-note { border-color: var(--c2); }
+.callout-note .callout-head { background: var(--clite); color: var(--cink); }
+.callout-tip { border-color: #b9d8c4; }
+.callout-tip .callout-head { background: #e6f2ea; color: #235c39; }
+.callout-warning { border-color: #eccfa3; }
+.callout-warning .callout-head { background: #fbeedd; color: #895014; }
+.callout-summary { border-color: #c7cdef; }
+.callout-summary .callout-head { background: #eceefa; color: #313c78; }
+/* 근거 성취기준(교사 전용, 학습목표 표기 전환 2026-07-23): 정답이 아니라 참조용 정보라 비밀이
+   아니다 — .answer 처럼 학생용에서 물리 제거하지 않고 CSS 표시 제어(data-mode)만으로 숨긴다. */
+.std-ref { display: none; }
+[data-mode="teacher"] .std-ref { display: block; }
+
+/* ---- B′ 저작 시맨틱 서식(code/pre/dl·dt·dd) — htmlAllowlist 확장분과 정합 ----
+ * AI 가 richtext/callout/지문 본문(자유 HTML 5위치)에 저작하는 깨끗한 시맨틱 태그. 인쇄본도 쓰는
+ * 공유 자산이라 교과색은 var()만, 나머지는 무채색 고정색(hardcoded-subject-color 회피). caption 은
+ * 위 `.obj-table caption` 이 이미 스타일한다. 이 태그들은 자유 HTML 위치에만 등장한다. */
+code { font-family: "D2Coding", Consolas, "Courier New", monospace; font-size: .92em;
+  background: #f2f3f5; border-radius: 3px; padding: 1px 4px; color: #2b2b2b; }
+pre { font-family: "D2Coding", Consolas, "Courier New", monospace; font-size: 9pt; line-height: 1.5;
+  background: #f7f8fa; border: 1px solid #e2e5ea; border-radius: 6px; padding: 8px 12px;
+  margin: 6px 0; white-space: pre-wrap; overflow-wrap: break-word; }
+pre code { background: none; padding: 0; }
+dl { margin: 6px 0; }
+dt { font-weight: 700; color: var(--cink); font-size: 9.5pt; margin-top: 5px; }
+dd { margin: 2px 0 0 14px; font-size: 9.5pt; color: #333; line-height: 1.55; }
+
+/* ---- directive (활동 지시문) ---- 교과별 글리프는 data-subject 분기 ---- */
+.direct { display: flex; gap: 8px; align-items: flex-start; margin: 7mm 0 3mm; font-weight: 700; font-size: 11pt; }
+.direct::before { content: "◐"; color: var(--c); font-size: 13pt; line-height: 1; margin-top: 1px; }
+body[data-subject="science"] .direct::before,
+body[data-subject="sci"] .direct::before { content: "🔬"; color: initial; font-size: 12pt; margin-top: 0; }
+.qnum { display: inline-flex; align-items: center; justify-content: center;
+  min-width: 17px; height: 17px; background: var(--c); color: #fff; border-radius: 50%;
+  font-size: 9pt; font-weight: 700; margin-right: 6px; }
+.subq { margin: 2mm 0 1mm; font-weight: 600; }
+
+/* ---- label-value table (국어) ---- */
+.lv-table td { border: 1px solid #cbd5c0; vertical-align: top; padding: 8px 10px; font-size: 9.5pt; }
+.lv-table td.label { background: var(--clabel); font-weight: 700; text-align: center; width: 26%; color: var(--cink); }
+.lv-table td.label.gray { background: #ededed; color: #444; }
+.lv-table td.blank { height: 42px; }
+.lv-table ul { margin: 0; padding-left: 16px; }
+.lv-table ul li { margin: 4px 0; }
+
+/* ---- dashed emphasis box (국어) ---- */
+.dash-box { border: 1.6px dashed var(--c2); border-radius: 8px; margin-top: 3mm; }
+.dash-box .dh { background: var(--clite); display: inline-block; margin: 8px 0 0 10px;
+  padding: 2px 10px; border-radius: 4px; font-weight: 700; color: var(--cink); font-size: 9.5pt; }
+.dash-box .db { min-height: 46px; padding: 8px 12px 12px; }
+
+/* ---- example strip (공통) ---- */
+.strip { margin-top: 3mm; border: 1px solid #cbd5c0; border-radius: 6px; overflow: hidden; }
+.strip .sh { background: var(--cstrip); color: #fff; font-weight: 700; text-align: center;
+  padding: 4px 10px; font-size: 9.5pt; }
+.strip .sb { padding: 8px 12px; font-size: 9pt; background: #fbfcfb; }
+.strip .sb p { margin: 3px 0; }
+
+/* ---- comparison table (국어) ---- */
+.cmp { margin-top: 3mm; }
+.cmp th { background: #ededed; font-weight: 700; padding: 6px; font-size: 9.5pt; border: 1px solid #ccc; }
+.cmp th.c { background: var(--clabel); color: var(--cink); }
+.cmp td { border: 1px solid #ccc; padding: 8px 10px; vertical-align: top; height: 44px; font-size: 9.5pt; }
+.cmp .hl { background: #efe6f7; padding: 2px 4px; border-radius: 3px; }
+.cmp td.lab { background: #f6f6f6; font-weight: 700; text-align: center; width: 18%; }
+
+/* ---- reading passage box (국어) — 저작권 지문은 .slot 유지 ----
+   테두리 색/두께·배경은 개체 필드(borderColor/borderWidth/bgColor)가 인라인 커스텀 프로퍼티로
+   덮어쓴다(#3). 미지정 개체는 var() 기본값이 그대로 적용돼 종전과 완전히 동일하다. */
+.passage { border: var(--wg-ps-bw, 1.5px) solid var(--wg-ps-border, #bbb); border-radius: 8px;
+  padding: 14px 18px; margin-top: 3mm; background: var(--wg-ps-bg, #fcfcfa); }
+.passage h3 { text-align: center; margin: 0 0 8px; font-size: 12pt; }
+.passage p { margin: 6px 0; font-size: 9.5pt; text-indent: 8px; line-height: 1.6; }
+.passage .slot { color: #b06a00; background: #fff5e6; border: 1px dashed #e0a94f;
+  border-radius: 5px; padding: 6px 10px; font-size: 8.7pt; margin: 6px 0; }
+.passage .passage-body { margin: 6px 0; font-size: 9.5pt; text-indent: 8px; line-height: 1.6; }
+.passage .src { text-align: right; font-size: 8.7pt; color: #555; margin-top: 6px; }
+.passage .fn { border-top: 1px dotted #ccc; margin-top: 8px; padding-top: 5px; font-size: 8.3pt; color: #555; }
+.passage .fn p { margin: 1px 0; text-indent: 0; }
+
+/* ---- 개체 트리 표(공통) — 테두리 색/두께는 --wg-tb-color/--wg-tb-width 로 조절(#5) ---- */
+.obj-table { border-collapse: collapse; width: 100%; margin: 2mm 0; }
+.obj-table th, .obj-table td {
+  border: var(--wg-tb-width, 1px) solid var(--wg-tb-color, #cbd5c0);
+  padding: 6px 9px; font-size: 9.5pt; vertical-align: top; min-height: 24px;
+}
+.obj-table th { background: var(--clite); color: var(--cink); font-weight: 700; }
+.obj-table caption { font-size: 9pt; color: #555; margin-bottom: 3px; caption-side: top; }
+
+/* ---- 이미지 개체 (공통) ----
+   `.image-slot` 규칙이 이 파일에 아예 없어서, 채운 이미지는 원본 크기 그대로 지면을 넘칠 수 있었고
+   빈 자리는 "［이미지 삽입 자리］"가 좌측에 붙은 맨 글자로만 보였다(실 Chrome 관측, #2).
+   여기(blocks.css)에 두는 이유는 도형·텍스트 상자와 같다 — 편집 화면·저장본·인쇄본이 같은 선언을
+   써야 편집==인쇄가 성립한다. 편집기 안내 문구는 넣지 않는다(학생 배포본에 찍힌다). */
+.image-slot { margin: 2mm 0; text-align: center; }
+.image-slot img { max-width: 100%; height: auto; border-radius: 6px; }
+.image-slot figcaption { margin-top: 4px; font-size: 8.7pt; color: #555; }
+.image-slot.placeholder {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  min-height: 30mm; padding: 10px 14px; border: 1.6px dashed var(--c2, #b9b9b9); border-radius: 10px;
+  background: repeating-linear-gradient(135deg, rgba(0,0,0,.018) 0 8px, transparent 8px 16px);
+  color: #8a8a8a;
+}
+.image-slot .is-icon { width: 30px; height: 30px; fill: none; stroke: var(--c2, #9aa0a6);
+  stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; opacity: .85; }
+.image-slot .is-icon circle { fill: var(--c2, #9aa0a6); stroke: none; }
+.image-slot .is-label { font-size: 9pt; font-weight: 700; color: var(--cink, #6b7280); letter-spacing: -.2px; }
+.image-slot .is-alt { font-size: 8.5pt; color: #8a8a8a; }
+
+/* ---- question + answer slot (공통) ---- */
+.q { margin: 2.5mm 0 1.5mm; font-weight: 600; }
+.ans-line { border-bottom: 1px solid #ccc; height: 20px; margin: 8px 0; }
+.ans-line.tall { height: 34px; }
+.ansbox { border: 1px solid #ccc; border-radius: 6px; min-height: 50px; margin-top: 5px; padding: 8px 10px; }
+
+/* ---- 문항 유형별 보조 렌더(#12) — qtype 마다 시각적으로 구분된다 ---- */
+.q-choices { list-style: none; margin: 3px 0 0; padding: 0; }
+.q-choices li { margin: 3px 0; font-size: 9.5pt; display: flex; gap: 6px; align-items: baseline; }
+.q-choices .q-mark { color: var(--c); font-weight: 700; flex: none; }
+.q-tf { display: flex; gap: 24px; margin: 4px 0 2px; font-size: 9.5pt; }
+.q-tf label { display: inline-flex; align-items: center; gap: 6px; }
+.q-box { display: inline-block; width: 13px; height: 13px; border: 1.4px solid #888; border-radius: 3px; }
+.q-tf-list { list-style: none; margin: 3px 0 0; padding: 0; }
+.q-tf-list li { margin: 4px 0; font-size: 9.5pt; display: flex; gap: 6px; align-items: baseline; }
+.q-tf-list .q-mark { color: var(--c); font-weight: 700; flex: none; }
+.q-tf-list .q-tf-stmt { flex: 1; }
+.q-tf-list .q-tf-ox { flex: none; color: #555; white-space: nowrap; letter-spacing: 1px; }
+.q-match { border-collapse: collapse; margin: 4px 0 2px; width: 100%; }
+.q-match td { padding: 4px 8px; font-size: 9.5pt; vertical-align: middle; }
+.q-match .q-match-l { border: 1px solid #cbd5c0; border-radius: 6px; width: 40%; background: #fbfcfb; }
+.q-match .q-match-r { border: 1px solid #cbd5c0; border-radius: 6px; width: 40%; background: #fbfcfb; }
+/* 연결점(#4): 두 점을 가운데 칸의 **좌우 끝**으로 벌려 각각 자기 항목 바로 옆에 붙인다.
+   전엔 `· · ` 두 글자가 칸 한가운데 붙어 있어 어느 항목의 점인지 알아보기 어려웠다.
+   td 자체에 display:flex 를 주면 table-cell 이 아니게 되어 열 너비가 깨지므로 안쪽 span 으로 편다. */
+.q-match .q-match-mid { width: 20%; padding: 4px 0; }
+.q-match .q-match-dots { display: flex; align-items: center; justify-content: space-between; padding: 0 3px; }
+.q-match .q-match-dot { display: block; width: 6px; height: 6px; border-radius: 50%; background: #777; flex: none; }
+.q-order { list-style: none; margin: 3px 0 0; padding: 0; }
+.q-order li { margin: 4px 0; font-size: 9.5pt; display: flex; gap: 8px; align-items: center; }
+.q-order-box { display: inline-block; width: 22px; height: 20px; border: 1.2px solid #999; border-radius: 4px; flex: none; }
+.q-short { margin: 6px 0 2px; }
+.q-short-line { display: block; border-bottom: 1px solid #bbb; height: 20px; }
+.q-essay { margin: 5px 0 2px; }
+.q-bank { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 5px 0 2px;
+  border: 1.2px dashed var(--c2); border-radius: 6px; padding: 6px 10px; background: #fbfcfb; }
+.q-bank-label { font-weight: 700; color: var(--cink); font-size: 8.7pt; margin-right: 4px; }
+.q-bank-chip { border: 1px solid #cbd5c0; border-radius: 12px; padding: 2px 10px; font-size: 9pt; background: #fff; }
+
+/* ---- teacher answer (교과 무관 고정 블루) ---- */
+.answer { display: none; }
+[data-mode="teacher"] .answer { display: block; color: #1a5fb4; font-weight: 500; font-size: 9.3pt;
+  background: #eef4fc; border-left: 3px solid #6aa3e0; padding: 5px 9px; margin: 5px 0; border-radius: 0 4px 4px 0; }
+[data-mode="teacher"] .answer.inline { display: inline; background: none; border: none; padding: 0; }
+
+/* ---- pro/con table (국어) — 찬반 의미색 고정 허용 ---- */
+.pc { margin-top: 3mm; }
+.pc th { padding: 5px; border: 1px solid #cbd5c0; font-size: 10pt; }
+.pc th.pro { background: #f7d9df; color: #a03a52; }
+.pc th.con { background: #dfe6f2; color: #35507e; }
+.pc td { border: 1px solid #cbd5c0; width: 50%; vertical-align: top; padding: 8px 10px; height: 70px; }
+.pc td .rc { color: #777; font-weight: 700; font-size: 8.7pt; }
+.pc td .dv { border-top: 1px dashed #c9c9c9; margin: 10px 0; }
+
+/* ---- memo table (국어) ---- */
+.memo th { background: var(--cstrip); color: #fff; padding: 4px; border: 1px solid #cbd5c0; font-size: 9.5pt; }
+.memo td { border: 1px solid #cbd5c0; padding: 5px 9px; vertical-align: top; font-size: 9pt; }
+.memo td.k { background: #f2f2f2; font-weight: 700; text-align: center; width: 12%; }
+.memo td.blank { height: 30px; }
+
+/* ---- reflection principles box (공통) ---- */
+.princ { border: 1.6px solid #cbd5c0; border-radius: 10px; padding: 8px 14px; margin-top: 2px; min-height: 46px; }
+.princ .dot { margin: 6px 0; padding-left: 4px; }
+.princ .dot::before { content: "•"; color: var(--c); font-weight: 700; margin-right: 8px; }
+
+/* ---- rubric checklist (공통) ---- */
+.rubric { margin-top: 3mm; }
+.rubric th { background: var(--cstrip); color: #fff; padding: 5px; border: 1px solid #cbd5c0; font-size: 9.5pt; }
+.rubric td { border: 1px solid #cbd5c0; padding: 5px 10px; font-size: 9.3pt; }
+.rubric td.stars { text-align: center; width: 22%; color: #f0a500; font-size: 12pt; letter-spacing: 2px; }
+.note-under { border-bottom: 1px solid #ccc; height: 14px; margin-top: 4px; }
+
+/* ---- 도형 개체 (공통) ----
+   .wg-shape-layer 는 블록 흐름 안에 놓인 높이 0 의 위치 기준점이다. 블록이 리플로우로
+   다음 쪽에 밀리면 도형도 함께 간다(쪽 절대배치였다면 본문만 밀리고 도형은 남는다).
+   여기(blocks.css)에 두는 이유: 에디터 주입 스타일은 저장·인쇄본에서 제거되므로
+   도형이 학생용 HTML·PDF 에서 사라진다. */
+.wg-shape-layer { position: relative; height: 0; }
+.wg-shape { position: absolute; overflow: visible; }
+.wg-shape > * {
+  fill: var(--wg-fill, none);
+  stroke: var(--wg-stroke, #333);
+  stroke-width: var(--wg-sw, 1.6);
+  stroke-dasharray: var(--wg-dash, 0);
+  /* 가로·세로를 다르게 늘려도 선 굵기는 일정하게 유지된다. */
+  vector-effect: non-scaling-stroke;
+}
+.wg-shape > .head { fill: var(--wg-stroke, #333); stroke: none; }
+.wg-shape[data-shape="line"] > *,
+.wg-shape[data-shape="arrow"] > line { fill: none; }
+
+/* ---- 텍스트 상자 개체 (자유 배치) ----
+   도형과 같은 앵커 섬 모델(.wg-text-layer = 높이 0 기준점). 인쇄·학생용에서도 살아야
+   하므로 여기(blocks.css)에 둔다. 화면 편집용 테두리는 에디터 주입 스타일이 따로 얹는다
+   (저장·인쇄본에는 테두리가 남지 않는다). */
+.wg-text-layer { position: relative; height: 0; }
+.wg-text {
+  position: absolute;
+  box-sizing: border-box;
+  min-height: 6mm;
+  padding: 1mm 1.5mm;
+  font-size: var(--wg-fs, 11pt);
+  color: var(--wg-color, #333333);
+  text-align: var(--wg-align, left);
+  line-height: 1.4;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+/* ---- numbered section heading (공통) ---- */
+h2.sec { display: flex; align-items: center; gap: 8px; font-size: 12pt; margin: 3mm 0 1.5mm; }
+/* 원형 — 문서 내 다른 번호 표기(.qnum)와 같은 형태로 통일한다. */
+h2.sec .n { background: var(--c); color: #fff; width: 20px; height: 20px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center; font-size: 10pt; }
+
+/* ===== 자료 제시 박스 (과학·공통) ===== */
+.qbox { border: 1.5px solid #cbd5c0; border-radius: 8px; background: #fbfcfb; padding: 10px 14px; margin-top: 2mm; }
+.qbox .lab { display: inline-block; background: var(--clite); color: var(--cink); font-weight: 700;
+  padding: 2px 10px; border-radius: 4px; font-size: 9pt; margin-bottom: 4px; }
+.hbox { border: 1.6px dashed var(--c2); border-radius: 8px; min-height: 40px; margin-top: 2mm; padding: 8px 12px; }
+
+/* ===== 과학 특수 블록 ① 변인 통제표 ===== */
+.vartable td { border: 1px solid #cbd5c0; padding: 8px 10px; vertical-align: top; font-size: 9.5pt; }
+.vartable td.k { background: var(--clabel); font-weight: 700; text-align: center; width: 24%; color: var(--cink); }
+.vartable td.blank { height: 34px; }
+
+/* ===== 과학 특수 블록 ② 데이터 기록표 ===== */
+.data { margin-top: 2mm; }
+.data th { background: var(--cstrip); color: #fff; padding: 6px; border: 1px solid #cbd5c0; font-size: 9.5pt; }
+.data td { border: 1px solid #cbd5c0; text-align: center; height: 30px; font-size: 9.5pt; }
+.data td.n { background: #fbfcfb; font-weight: 700; }
+.data td .a { color: #1a5fb4; font-weight: 600; }
+
+/* ===== 과학 특수 블록 ③ 수식 박스 (KaTeX) ===== */
+.formula { text-align: center; background: #fbfcfb; border: 1px solid #cbd5c0; border-radius: 8px;
+  padding: 10px; margin-top: 2mm; font-size: 12pt; }
+
+/* ===== 과학/수학 특수 블록 ④ SVG 모눈 그래프 ===== */
+.graphwrap { text-align: center; margin-top: 2mm; }
+.gcap { font-size: 9pt; color: #555; margin-top: 3px; }
+.plot-ans { display: none; }
+[data-mode="teacher"] .plot-ans { display: inline; }
+
+/* ===== 사회 특수 블록 ① 지도 활동(백지도/주석) ===== */
+.mapbox { border: 1.5px solid var(--c2); border-radius: 8px; background: var(--clite);
+  padding: 10px 14px; margin-top: 2mm; }
+.mapbox .maphead { display: inline-block; background: var(--c); color: #fff; font-weight: 700;
+  font-size: 9pt; padding: 2px 12px; border-radius: 4px; margin-bottom: 6px; }
+.mapbox .mapcanvas { background: #fff; border: 1px dashed #b9b9b9; border-radius: 6px;
+  min-height: 128px; display: flex; align-items: center; justify-content: center; }
+.mapbox .mapcanvas svg { display: block; width: 100%; height: auto; max-height: 72mm; }
+.mapbox .map-ocean { fill: #fff; stroke: #aaa; }
+.mapbox .map-graticule { fill: none; stroke: #d7d7d7; stroke-width: .65; }
+.mapbox .map-land { fill: #f2f0e9; stroke: #686868; stroke-width: .55; vector-effect: non-scaling-stroke; }
+.mapbox .mapcap { font-size: 9pt; color: #555; margin-top: 4px; }
+.mapbox .map-source { float: right; color: #777; font-size: 8pt; }
+
+/* ===== 사회 특수 블록 ② 연표(타임라인) ===== */
+.timeline { margin-top: 3mm; border-top: 3px solid var(--c); padding-top: 4px; }
+.timeline .tl-row { display: flex; gap: 6px; }
+.timeline .tl-node { flex: 1; text-align: center; }
+.timeline .tl-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--c);
+  margin: -11px auto 6px; border: 2px solid #fff; }
+.timeline .tl-year { font-weight: 700; color: var(--cink); font-size: 9.3pt; }
+.timeline .tl-box { border: 1px solid #cbd5c0; border-radius: 6px; min-height: 44px;
+  margin-top: 4px; padding: 5px 7px; font-size: 8.7pt; background: #fbfcfb; }
+
+/* ===== 영어 특수 블록 ① 어휘 표 ===== */
+.vocab { margin-top: 3mm; }
+.vocab th { background: var(--cstrip); color: #fff; padding: 5px; border: 1px solid #cbd5c0; font-size: 9.5pt; }
+.vocab td { border: 1px solid #cbd5c0; padding: 6px 9px; vertical-align: top; font-size: 9.3pt; }
+.vocab td.w { background: var(--clabel); font-weight: 700; color: var(--cink); width: 26%; }
+.vocab td.blank { height: 26px; }
+
+/* ===== 영어 특수 블록 ② 대화문(다이얼로그) ===== */
+.dialogue { margin-top: 3mm; border: 1.4px solid var(--c2); border-radius: 8px;
+  background: var(--clite); padding: 10px 14px; }
+.dialogue .turn { display: flex; gap: 8px; margin: 5px 0; font-size: 9.5pt; }
+.dialogue .spk { font-weight: 700; color: var(--cink); min-width: 34px; }
+.dialogue .blank { border-bottom: 1px solid #bbb; flex: 1; min-height: 16px; }
+
+/* ===== 시각 조직자(graphic organizers) — Track A 표형 (범교과 코어) ===== */
+/* 인쇄안전은 .keep(page-break-inside:avoid, paper.css)로 보장. 색은 테마 토큰(var(--*))만. */
+.kwl, .frayer, .w5h1, .bme, .exit321, .mainidea {
+  margin-top: 3mm; width: 100%; border-collapse: collapse; }
+.kwl th, .frayer th, .bme th, .mainidea th {
+  background: var(--clabel); color: var(--cink); font-weight: 700;
+  padding: 6px; font-size: 9.5pt; border: 1px solid #cbd5c0; text-align: center; }
+.kwl td, .frayer td, .bme td, .w5h1 td, .exit321 td, .mainidea td {
+  border: 1px solid #cbd5c0; padding: 8px 10px; vertical-align: top; font-size: 9.5pt; }
+
+/* KWL — 아는 것 / 알고 싶은 것 / 배운 것 (3열) */
+.kwl th span { display: block; font-weight: 400; font-size: 8pt; color: #555; margin-top: 2px; }
+.kwl td { height: 96px; width: 33.33%; }
+
+/* 프레이어 모형 — 정의·특징·예·비예 (2×2) + 중심 개념 */
+.frayer { caption-side: top; }
+.frayer caption { font-weight: 700; color: var(--cink); font-size: 9.5pt;
+  margin-bottom: 3px; text-align: center; }
+.frayer th { width: 50%; }
+.frayer td.fq { height: 72px; width: 50%; }
+
+/* 5W1H (Big 6) — 라벨-값 6행 */
+.w5h1 td.lab { background: #f6f6f6; font-weight: 700; text-align: center; width: 28%; }
+.w5h1 td { height: 34px; }
+
+/* 처음·중간·끝 — 3열 서사 구조 */
+.bme td { height: 112px; width: 33.33%; }
+
+/* 3-2-1 성찰(엑시트 티켓) */
+.exit321 td.num { background: var(--clabel); color: var(--cink); font-weight: 700;
+  text-align: center; width: 12%; font-size: 12pt; }
+.exit321 .wr { border-bottom: 1px solid #bbb; margin: 8px 0 2px; min-height: 15px; }
+
+/* 핵심 아이디어 + 뒷받침 근거 */
+.mainidea td.mi-main { height: 46px; }
+.mainidea td.mi-sup { height: 20px; }
+.mainidea .wr { border-bottom: 1px solid #bbb; margin: 6px 0 10px; min-height: 15px; }
+
+/* ===== 시각 조직자 배치2 (범교과 코어) ===== */
+.notetaking, .hamburger, .perspectives, .prediction, .glowgrow, .stoplight {
+  margin-top: 3mm; width: 100%; border-collapse: collapse; }
+.notetaking th, .hamburger th, .perspectives th, .prediction th, .glowgrow th {
+  background: var(--clabel); color: var(--cink); font-weight: 700; padding: 6px;
+  font-size: 9.5pt; border: 1px solid #cbd5c0; text-align: center; }
+.notetaking td, .hamburger td, .perspectives td, .prediction td, .glowgrow td, .stoplight td {
+  border: 1px solid #cbd5c0; padding: 8px 10px; vertical-align: top; font-size: 9.5pt; }
+.notetaking .wr, .hamburger .wr, .stoplight .wr {
+  border-bottom: 1px solid #bbb; margin: 6px 0 8px; min-height: 15px; }
+
+/* 노트 정리(코넬식) — 핵심어 / 내용 / 요약 */
+.notetaking th.nt-cue, .notetaking td.nt-cue { width: 30%; }
+.notetaking td.nt-cue { background: #f6f6f6; }
+.notetaking td.nt-note { height: 118px; }
+
+/* 문단 쓰기 계획(햄버거) — 주제문 / 뒷받침 / 맺음 */
+.hamburger td.hb { height: 20px; }
+
+/* 관점 비교 — 입장 / 근거 / 내 생각 */
+.perspectives td.lab { background: #f6f6f6; font-weight: 700; text-align: center; width: 24%; }
+.perspectives td { height: 60px; }
+
+/* 예측하기 — 예상 / 관찰 / 비교 */
+.prediction td { height: 96px; width: 33.33%; }
+
+/* Glow & Grow 성찰 */
+.glowgrow td { height: 90px; width: 50%; }
+
+/* 신호등 자기점검 */
+.stoplight td.sl { width: 12%; text-align: center; font-size: 18pt; line-height: 1; }
+.stoplight td.sl-r { color: #d32f2f; }
+.stoplight td.sl-y { color: #f9a825; }
+.stoplight td.sl-g { color: #388e3c; }
+
+/* ===== 시각 조직자 Track B — 그림형(SVG, 범교과 코어) ===== */
+/* 색은 전부 CSS(HTML SVG 엔 hex 0 — 범교과 게이트 통과). 인쇄안전 = .keep + 고정비율 SVG. */
+.venn, .conceptmap, .fishbone, .plotdiagram { margin-top: 3mm; text-align: center; }
+.venn svg, .conceptmap svg, .fishbone svg, .plotdiagram svg {
+  max-width: 100%; height: auto; display: block; margin: 0 auto; }
+.venn text, .conceptmap text, .fishbone text, .plotdiagram text {
+  fill: #333; font-family: Pretendard, "Malgun Gothic", sans-serif; font-weight: 700; }
+.org-cap { font-size: 8.7pt; color: #666; margin-top: 4px; text-align: center; }
+
+/* 벤다이어그램 — 두 원 + 겹침(공통점) */
+.venn svg circle { fill: none; stroke: #7a7a7a; }
+.venn .v-mid { fill: #777; font-weight: 400; }
+
+/* 개념 지도 — 중심 + 방사 노드 */
+.conceptmap svg line { stroke: #aaa; }
+.conceptmap svg .cm-core { fill: #eef1f4; stroke: #666; }
+/* 노드 상자는 흰색 채움 — 뒤에서 오는 연결선이 상자 위로 비쳐 보이지 않게 가린다(z-order 디테일). */
+.conceptmap svg .cm-node { fill: #fff; stroke: #999; }
+
+/* 피시본(원인·결과) — 중심선 + 가지 */
+.fishbone svg .fb-spine { stroke: #777; }
+.fishbone svg .fb-branch { stroke: #aaa; }
+.fishbone svg .fb-arrow { fill: #777; }
+.fishbone svg .fb-result { fill: #eef1f4; stroke: #666; }
+.fishbone .fb-lab { fill: #888; font-weight: 400; }
+
+/* 플롯 다이어그램(이야기 산) — 발단·전개·절정·하강·결말 */
+.plotdiagram svg .pd-line { fill: none; stroke: #777; }
+.plotdiagram svg .pd-dot { fill: #666; }
+.plotdiagram .pd-lab { fill: #777; font-weight: 400; }
+
+/* ===== 시각 조직자 Track B 배치2 (SVG, 범교과 코어) ===== */
+.hierarchy, .flowchart, .hexagon { margin-top: 3mm; text-align: center; }
+.hierarchy svg, .flowchart svg, .hexagon svg {
+  max-width: 100%; height: auto; display: block; margin: 0 auto; }
+.hierarchy text, .flowchart text {
+  fill: #333; font-family: Pretendard, "Malgun Gothic", sans-serif; font-weight: 700; }
+
+/* 위계 트리 — 상위 개념 + 하위 노드 */
+.hierarchy svg .h-top { fill: #eef1f4; stroke: #666; stroke-width: 1.4; }
+/* 하위 노드도 흰색 채움 — 연결선이 상자 위로 비치지 않게(z-order 디테일). */
+.hierarchy svg .h-node { fill: #fff; stroke: #999; stroke-width: 1.2; }
+.hierarchy svg .h-link { stroke: #aaa; stroke-width: 1.2; }
+
+/* 순서 흐름도 — 단계 박스 + 화살표 */
+.flowchart svg .fc-box { fill: none; stroke: #888; stroke-width: 1.3; }
+.flowchart svg .fc-link { stroke: #888; stroke-width: 1.3; }
+.flowchart svg .fc-arrow { fill: #888; }
+
+/* 헥사고날 싱킹 — 연결 사고 */
+.hexagon svg .hx { fill: none; stroke: #888; stroke-width: 1.3; }
+
+/* ===== 시각 조직자 배치3 — 독서·문학·글쓰기 (범교과 코어) ===== */
+.character, .bookreview, .quotejournal { margin-top: 3mm; width: 100%; border-collapse: collapse; }
+.character td, .bookreview td, .quotejournal td, .quotejournal th {
+  border: 1px solid #cbd5c0; padding: 8px 10px; vertical-align: top; font-size: 9.5pt; }
+.character td.lab, .bookreview td.lab {
+  background: #f6f6f6; font-weight: 700; text-align: center; width: 26%; }
+.character td { height: 40px; }
+.bookreview td { height: 38px; }
+.bookreview td.tall { height: 62px; }
+
+/* 인용 저널 */
+.quotejournal th { background: var(--clabel); color: var(--cink); font-weight: 700;
+  padding: 6px; text-align: center; font-size: 9.5pt; }
+.quotejournal .q-p { width: 12%; text-align: center; }
+.quotejournal td.q-quote { height: 58px; width: 44%; }
+.quotejournal td.q-think { height: 58px; }
+
+/* 5문단 에세이 설계 — 섹션 스택(각 섹션 keep, 섹션 사이 페이지 넘김 허용) */
+.essayplan { margin-top: 3mm; }
+.essayplan .ep-sec { border: 1px solid #cbd5c0; border-radius: 6px; margin-bottom: 6px; overflow: hidden; }
+.essayplan .ep-h { background: var(--clabel); color: var(--cink); font-weight: 700;
+  padding: 5px 10px; font-size: 9.5pt; }
+.essayplan .ep-b { min-height: 44px; padding: 8px 10px; }

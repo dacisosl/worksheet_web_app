@@ -1,0 +1,11 @@
+/* 수학 테마 — blue (themes.md 기준값)
+ * 교과색은 여기 :root 변수로만 정의한다. 블록 CSS는 var(--*)만 참조한다.
+ */
+:root {
+  --c:      #1565c0;  /* primary (pill·강조) */
+  --c2:     #1e88e5;  /* border/title */
+  --clite:  #e8f1fb;  /* 아주 옅은 배경 */
+  --cstrip: #64b5f6;  /* 표 헤더 스트립 */
+  --clabel: #bbdefb;  /* 라벨 셀 배경 */
+  --cink:   #0d47a1;  /* 진한 텍스트 강조 */
+}

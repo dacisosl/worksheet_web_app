@@ -1,0 +1,15 @@
+{
+  "name": "worksheet-grab",
+  "version": "0.6.0-beta.1",
+  "type": "module",
+  "bin": {
+    "worksheet-grab": "bin/worksheet-grab.js"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "license": "MIT",
+  "scripts": {
+    "build:gem": "node tools/build-gem-renderer.mjs && node tools/build-gem-knowledge.mjs"
+  }
+}

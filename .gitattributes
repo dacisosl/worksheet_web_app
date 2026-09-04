@@ -1,0 +1,13 @@
+# 줄바꿈은 LF 로 고정한다. 빌드 산출물(gem/worksheet-render.html)은 원본을 그대로 이어 붙여
+# 굽기 때문에, 체크아웃 플랫폼마다 CRLF 로 바뀌면 같은 입력이 다른 바이트를 낸다.
+* text=auto eol=lf
+
+# 이진 파일
+*.pdf binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.woff binary
+*.woff2 binary

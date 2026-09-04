@@ -1,0 +1,23 @@
+# 실행 산출물 — 교사의 실제 활동지·PDF·편집 이력이 쌓이는 곳(저장소에 넣지 않는다)
+/out/
+/worksheets/
+/workbooks/
+
+# 파이프라인 작업 폴더(재실행하면 다시 생긴다)
+/_workspace/
+/_workspace_prev/
+
+# 에디터의 AI 액션 파일 큐
+.ai-bridge/
+
+# 의존성·OS·에디터
+node_modules/
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# 로컬 실험물
+scratchpad/
+*.local.*

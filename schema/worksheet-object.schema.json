@@ -1,0 +1,405 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worksheet-grab.local/schema/worksheet-object.schema.json",
+  "title": "worksheet-grab editor-v4 개체 스키마 (M1 S1.1 동결본)",
+  "description": "닫힌 카탈로그 12종 + qtype 7종 + 문서 수준 pagination 상태(scaffold|paginated, D-A/R2-4). scratchpad/spike-editor-v4/candidate-schema.json 의 실사용 적합성 실증(S1.0)을 반영해 동결. 런타임 검증은 이 JSON Schema 를 직접 소비하지 않고 무빌드 바닐라 ESM 인 src/domain/schema/*.js 가 동일 규칙을 재구현한다(zero-dependency 원칙 — ajv 등 외부 JSON Schema 검증기 미사용). 두 산출물의 정합은 test/unit/object-schema.test.js 가 카탈로그 12종 픽스처로 상시 단정한다. 상세 근거는 docs/HANDOFF-object-schema.md 참조.",
+  "type": "object",
+  "required": ["pagination", "pages"],
+  "properties": {
+    "pagination": {
+      "type": "string",
+      "enum": ["scaffold", "paginated"],
+      "description": "R2-4: 'scaffold'=경계 미계산(compose 산출물), 'paginated'=Chrome 측정 패스가 pages[] 경계를 영속화 완료. scaffold 문서는 export 거부 대상(계약 — src/domain/schema/exportGate.js#checkExportGate, ExportDocument 는 M2/S3.5 소관)."
+    },
+    "pages": {
+      "type": "array",
+      "description": "문서 페이지 배열. 각 페이지는 flow(리플로우 순서 배열)와 float(절대좌표 배열) 두 층을 갖는다(D-A: 경계는 Chrome 측정 패스가 채운 것으로 간주).",
+      "items": {
+        "type": "object",
+        "required": ["id", "flow", "float"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1, "pattern": "\\S", "description": "문서 안에서 영구적으로 유지되는 고유 페이지 ID." },
+          "role": { "type": "string", "minLength": 1, "pattern": "\\S", "description": "선택 페이지 용도 표식. 레이아웃이나 개체 타입을 강제하지 않는다." },
+          "flow": { "type": "array", "items": { "$ref": "#/$defs/object" } },
+          "float": { "type": "array", "items": { "$ref": "#/$defs/floatObject" } }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false,
+
+  "$defs": {
+    "commonProps": {
+      "id": { "type": "string", "description": "문서 내 고유 ID." },
+      "type": { "type": "string", "enum": [
+        "title", "passage-slot", "question", "table", "image-slot",
+        "answer-area", "divider", "shape", "richtext", "std-box",
+        "callout", "organizer", "spacer", "page-break"
+      ]},
+      "answer": {
+        "type": "boolean",
+        "description": "true면 교사용 전용(정답/모범답안) — 학생용 파생 시 물리 제거 대상(BuildVariants 계약, S2.2). 개체 구조 속성이라 텍스트 편집으로 벗겨지지 않는다. 이 필드를 실을 수 있는 타입은 각 타입 스키마가 명시적으로 허용한 경우뿐이다(answer 위치 규칙 — title/question/table/richtext 만 허용, 나머지는 additionalProperties:false 로 거부)."
+      },
+      "placement": {
+        "type": "string",
+        "enum": ["flow", "float"],
+        "description": "flow=문서 흐름(리플로우 대상, D-A 페이지네이션 권한 적용, rect 금지). float=페이지 내 절대좌표(rect 필수)."
+      },
+      "rect": {
+        "type": "object",
+        "description": "placement:'float'일 때만 필수(placement:'flow'에서는 존재 자체가 위반 — AI 는 구조만, 좌표는 만들지 않는다·원칙 3). 단위는 mm(에디터 MM_TO_PX 관례, editor.js 참조).",
+        "required": ["xMm", "yMm", "wMm", "hMm"],
+        "properties": {
+          "xMm": { "type": "number" },
+          "yMm": { "type": "number" },
+          "wMm": { "type": "number" },
+          "hMm": { "type": "number" }
+        },
+        "additionalProperties": false
+      },
+      "opacity": {
+        "type": "number", "minimum": 0, "maximum": 1,
+        "description": "자유 배치(float) 개체의 불투명도(0~1, 기본 1). 렌더 style opacity 로 반영(인쇄 포함). ALWAYS_ALLOWED_FIELDS 로 전 타입 허용하되 float 렌더에서만 적용된다."
+      },
+      "angle": {
+        "type": "number", "minimum": -180, "maximum": 180,
+        "description": "자유 배치(float) 개체의 회전 각도(도, 기본 0). 렌더 transform:rotate(중심 기준)로 반영(인쇄 포함). ALWAYS_ALLOWED_FIELDS 로 전 타입 허용하되 float 렌더에서만 적용된다."
+      },
+      "widthPct": {
+        "type": "number", "minimum": 5, "maximum": 100,
+        "description": "본문 배치(flow) 개체의 폭 — 본문 폭(=.sheet-body 열 폭) 대비 %(5~100). mm 가 아닌 이유: 용지·단 수를 바꾸면 mm 는 열을 넘겨 클램프가 필요하고 클램프는 값을 되돌릴 수 없게 덮어쓴다(docs/DECISION-object-resize.md §1.2). 렌더가 .wg-obj 래퍼에 인라인 width 로 방출하며 편집·인쇄에 동일하게 들어간다(R2-1). float 에는 실을 수 없다(size-forbidden-in-float — 크기는 rect 가 정한다). AI 저작 어휘가 아니다(편집기 전용)."
+      },
+      "minHeightMm": {
+        "type": "number", "exclusiveMinimum": 0,
+        "description": "본문 배치(flow) 개체의 최소 높이(mm). 고정 height 가 아닌 이유: 내용이 넘치면 잘리는데 그 넘침은 페이지네이션 측정에 잡히지 않아 페이지 경계가 조용히 어긋난다(R2-1 붕괴). min- 은 내용이 늘면 따라 늘어난다. 순수 여백만 필요하면 spacer 타입을 쓴다. AI 저작 어휘가 아니다(편집기 전용)."
+      },
+      "align": {
+        "type": "string", "enum": ["left", "center", "right"], "default": "left",
+        "description": "widthPct 로 폭을 줄인 개체의 좌우 정렬(렌더 margin-inline). 높이에 영향이 없어 R2-1 위험이 없다. widthPct 가 없으면(=100% 폭) 시각적 효과가 없다. left 는 기본값이라 렌더가 선언 자체를 생략한다. AI 저작 어휘가 아니다(편집기 전용)."
+      }
+    },
+
+    "object": {
+      "oneOf": [
+        { "$ref": "#/$defs/titleObject" },
+        { "$ref": "#/$defs/passageSlotObject" },
+        { "$ref": "#/$defs/questionObject" },
+        { "$ref": "#/$defs/tableObject" },
+        { "$ref": "#/$defs/imageSlotObject" },
+        { "$ref": "#/$defs/answerAreaObject" },
+        { "$ref": "#/$defs/dividerObject" },
+        { "$ref": "#/$defs/shapeObject" },
+        { "$ref": "#/$defs/richtextObject" },
+        { "$ref": "#/$defs/stdBoxObject" },
+        { "$ref": "#/$defs/calloutObject" },
+        { "$ref": "#/$defs/organizerObject" },
+        { "$ref": "#/$defs/spacerObject" },
+        { "$ref": "#/$defs/pageBreakObject" }
+      ]
+    },
+    "floatObject": {
+      "description": "object 와 동일 카탈로그이나 placement 가 'float' 로 고정되고 rect 가 필수(문서 pages[].float 배열 전용 뷰).",
+      "allOf": [{ "$ref": "#/$defs/object" }]
+    },
+
+    "titleObject": {
+      "type": "object",
+      "description": "문서/단원 제목 블록.",
+      "required": ["id", "type", "placement", "text"],
+      "properties": {
+        "id": { "$ref": "#/$defs/commonProps/id" },
+        "type": { "const": "title" },
+        "placement": { "const": "flow" },
+        "level": { "type": "integer", "enum": [1, 2], "default": 1, "description": "1=문서 대제목(h1), 2=섹션 소제목(h2)." },
+        "text": { "type": "string" },
+        "textHtml": { "type": "string", "description": "인라인 서식(굵게/기울임 등)이 적용된 제목의 살균 HTML(선택). 있으면 렌더가 text 대신 이스케이프 없이 방출한다(richtext.html 과 동형). text 는 평문으로 병행 보관(정답 누출 스캔·diff용)." },
+        "meta": {
+          "type": "object",
+          "description": "R5/§SS3: 자유 확장 object 금지(탈출구 봉쇄) — 스파이크에서 실관측된 header 부가정보만 명시 필드로 허용한 닫힌 형태.",
+          "properties": {
+            "pill": { "type": "string", "description": "단원/차시 배지 텍스트(예: '1단원 2차시')." },
+            "page": { "type": "string", "description": "교과서 대응 쪽수(예: 'p.24~27')." },
+            "source": { "type": "string", "description": "출처 표기(교과서/저작물명 등, 창작 아닌 표기용)." }
+          },
+          "additionalProperties": false
+        },
+        "answer": { "$ref": "#/$defs/commonProps/answer" },
+        "widthPct": { "$ref": "#/$defs/commonProps/widthPct" },
+        "minHeightMm": { "$ref": "#/$defs/commonProps/minHeightMm" },
+        "align": { "$ref": "#/$defs/commonProps/align" }
+      },
+      "additionalProperties": false
+    },
+
+    "calloutObject": {
+      "type": "object",
+      "description": "강조상자(팁·주의·핵심정리 등) — flow 전용, 정답 미포함 중립 박스.",
+      "required": ["id", "type", "placement", "variant", "body"],
+      "properties": {
+        "id": { "$ref": "#/$defs/commonProps/id" },
+        "type": { "const": "callout" },
+        "placement": { "const": "flow" },
+        "variant": { "type": "string", "enum": ["tip", "warning", "note", "summary"], "description": "강조 유형(팁/주의/노트/핵심정리)." },
+        "body": { "type": "string", "description": "강조상자 본문(살균 HTML)." },
+        "title": { "type": "string", "description": "강조상자 제목(선택, 평문)." },
+        "titleHtml": { "type": "string", "description": "제목 인라인 서식 살균 HTML(선택)." },
+        "widthPct": { "$ref": "#/$defs/commonProps/widthPct" },
+        "minHeightMm": { "$ref": "#/$defs/commonProps/minHeightMm" },
+        "align": { "$ref": "#/$defs/commonProps/align" }
+      },
+      "additionalProperties": false
+    },
+
+    "organizerObject": {
+      "type": "object",
+      "description": "편집 가능 그림형 조직자(P3 스파이크, 2026-07-31) — 벤다이어그램 등 파라메트릭 SVG. flow 전용(엔진이 소유한 고정비율 SVG — 좌표·도형은 교사/AI 가 만들지 않는다·원칙 3). kind=조직자 종류, params=개수(예 {circles:3}), labels=슬롯 텍스트 배열(교사 저작·선택, 없으면 엔진 기본 라벨). answer 미포함(그림형은 중립 — callout 과 동형). 렌더는 OrganizerGen 이 단일 출처로 SVG 를 그린다(편집==인쇄 — 잠금 richtext 가 굽던 것과 같은 생성기 출력).",
+      "required": ["id", "type", "placement", "kind"],
+      "properties": {
+        "id": { "$ref": "#/$defs/commonProps/id" },
+        "type": { "const": "organizer" },
+        "placement": { "const": "flow" },
+        "kind": { "type": "string", "enum": ["venn", "conceptmap", "fishbone", "flowchart", "hierarchy", "hexagon"], "description": "조직자 종류(OrganizerGen.ORGANIZER_GENERATORS 키). 엔진이 이 종류의 고정비율 SVG 뼈대를 결정적으로 그린다." },
+        "params": { "type": "object", "description": "개수 파라미터(예 벤다이어그램 {circles:2|3}). 키는 kind 별로 다르며 엔진(OrganizerGen)이 범위 clamp·해석한다 — 스키마·validator 는 내부를 검사하지 않는다(table rows 와 동일 경계)." },
+        "labels": { "type": "object", "description": "슬롯 이름→글자 맵(교사 저작·선택). 키는 kind 별 슬롯 이름(예 venn 2원: left/right/common · 3원: a/b/c/common), 값은 그 슬롯 텍스트. 배열 index 가 아니라 이름이라 개수를 바꿔도 슬롯이 밀리지 않는다(ADR §6-1). 슬롯의 순서·좌표는 엔진(OrganizerGen) 소유(원칙 3). 비거나 없으면 엔진 기본 라벨." },
+        "widthPct": { "$ref": "#/$defs/commonProps/widthPct" },
+        "minHeightMm": { "$ref": "#/$defs/commonProps/minHeightMm" },
+        "align": { "$ref": "#/$defs/commonProps/align" }
+      },
+      "additionalProperties": false
+    },
+
+    "passageSlotObject": {
+      "type": "object",
+      "description": "저작권 지문 슬롯. 2층 정책(2026-07-23) — AI에게는 불변(생성·임베드·재작성 금지, aiBridge 타입 가드로 요청 대상에서 구조적으로 제외)이지만, 교사는 편집기에서 bodyHtml(본문)·source(출처)를 직접 입력·수정할 수 있다(저작권법 제25조 학교교육 목적 이용 — 로컬 처리·교사 책임). bodyHtml 이 비어 있으면 slotLabel 안내 문구가 플레이스홀더로 렌더된다.",
+      "required": ["id", "type", "placement", "slotLabel"],
+      "properties": {
+        "id": { "$ref": "#/$defs/commonProps/id" },
+        "type": { "const": "passage-slot" },
+        "placement": { "const": "flow" },
+        "title": { "type": "string" },
+        "slotLabel": { "type": "string", "description": "슬롯 안내 문구(예: '［지문 삽입 슬롯］'). bodyHtml 이 비어 있을 때 플레이스홀더로 렌더된다." },
+        "bodyHtml": { "type": "string", "description": "지문 본문(교사가 편집기에서 직접 입력, richtext.html 과 동형 관례 — 무손실 HTML). AI 는 이 필드를 채우거나 재작성하지 않는다(AI_EXCLUDED_TYPES, aiBridge 강제)." },
+        "source": { "type": "string", "description": "지문 출처 표기(교사 입력). bodyHtml 이 채워졌는데 비어 있으면 ValidateObjectTree 가 advisory warning(passage-source-missing)을 낸다(게이트 차단 아님)." },
+        "footnotes": { "type": "array", "items": { "type": "string" } },
+        "borderColor": { "type": "string", "description": "지문 박스 테두리 색(CSS 색상 토큰 — #rrggbb 또는 색 이름). 렌더가 --wg-ps-border 커스텀 프로퍼티로 방출하고 blocks.css `.passage` 가 받는다. 미지정 시 기본 #bbb." },
+        "borderWidth": { "type": "number", "minimum": 0, "description": "지문 박스 테두리 두께(px). 미지정 시 기본 1.5px. 0 이면 테두리 없음." },
+        "bgColor": { "type": "string", "description": "지문 박스 배경색(CSS 색상 토큰). 미지정 시 기본 #fcfcfa." },
+        "widthPct": { "$ref": "#/$defs/commonProps/widthPct" },
+        "minHeightMm": { "$ref": "#/$defs/commonProps/minHeightMm" },
+        "align": { "$ref": "#/$defs/commonProps/align" }
+      },
+      "additionalProperties": false
+    },
+
+    "questionObject": {
+      "type": "object",
+      "description": "질문 판별자(qtype). C-11: S1.0 스파이크에서 7종 전량 삽입·편집이 실증되어 M1 동결 대상으로 확정.",
+      "required": ["id", "type", "placement", "qtype", "prompt"],
+      "properties": {
+        "id": { "$ref": "#/$defs/commonProps/id" },
+        "type": { "const": "question" },
+        "placement": { "$ref": "#/$defs/commonProps/placement" },
+        "rect": { "$ref": "#/$defs/commonProps/rect" },
+        "qnum": { "type": ["string", "null"], "description": "문항 번호 배지(선택)." },
+        "qtype": {
+          "type": "string",
+          "enum": ["multiple-choice", "short-answer", "essay", "fill-blank", "true-false", "matching", "ordering"],
+          "description": "객관식·단답·서술·빈칸·참거짓·짝짓기·순서."
+        },
+        "prompt": { "type": "string" },
+        "promptHtml": { "type": "string", "description": "발문에 인라인 서식이 적용됐을 때의 살균 HTML(선택, title.textHtml 과 동형). qnum 배지는 미포함. 없으면 prompt 를 이스케이프해 렌더(하위호환)." },
+        "lines": { "type": "integer", "minimum": 0, "description": "서술형(essay) 내장 답란 줄 수. 0 이면 내장 답란 없음(마이그레이션 문항 — 별도 answer-area 개체가 답 공간을 제공). 미지정이면 렌더 기본 4줄." },
+        "choices": {
+          "type": "array",
+          "description": "qtype='multiple-choice' 전용.",
+          "items": { "type": "object", "required": ["id", "text"], "properties": { "id": { "type": "string" }, "text": { "type": "string" } } }
+        },
+        "blanks": {
+          "type": "array",
+          "description": "qtype='fill-blank' 전용 — prompt 내 {{빈칸ID}} 토큰과 대응.",
+          "items": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } }
+        },
+        "left": { "type": "array", "description": "qtype='matching' 전용 좌열.", "items": { "type": "object", "required": ["id", "text"], "properties": { "id": { "type": "string" }, "text": { "type": "string" } } } },
+        "right": { "type": "array", "description": "qtype='matching' 전용 우열.", "items": { "type": "object", "required": ["id", "text"], "properties": { "id": { "type": "string" }, "text": { "type": "string" } } } },
+        "items": {
+          "type": "array",
+          "description": "qtype='ordering' 전용 — 뒤섞인 순서로 제시.",
+          "items": { "type": "object", "required": ["id", "text"], "properties": { "id": { "type": "string" }, "text": { "type": "string" } } }
+        },
+        "answerKey": {
+          "type": ["object", "null"],
+          "description": "정답 데이터. 인접 정답 콘텐츠 병합(마이그레이션 휴리스틱, S1.3 몫)의 착지점 — object.answer=true 와 별개 필드이며, answerKey 존재 여부와 무관하게 answer:true 인 객체 전체가 학생용에서 물리 제거된다."
+        },
+        "answer": { "$ref": "#/$defs/commonProps/answer" },
+        "widthPct": { "$ref": "#/$defs/commonProps/widthPct" },
+        "minHeightMm": { "$ref": "#/$defs/commonProps/minHeightMm" },
+        "align": { "$ref": "#/$defs/commonProps/align" }
+      },
+      "additionalProperties": false
+    },
+
+    "tableObject": {
+      "type": "object",
+      "description": "표. 분할 불가(splittable 상수 false) — ValidateObjectTree 가 splittable:true 지정을 거부한다(S1.2).",
+      "required": ["id", "type", "placement", "splittable", "rows"],
+      "properties": {
+        "id": { "$ref": "#/$defs/commonProps/id" },
+        "type": { "const": "table" },
+        "placement": { "$ref": "#/$defs/commonProps/placement" },
+        "rect": { "$ref": "#/$defs/commonProps/rect" },
+        "splittable": { "const": false },
+        "caption": { "type": "string" },
+        "headerRows": { "type": "integer", "minimum": 0, "default": 0 },
+        "headerCol": { "type": "boolean", "default": false },
+        "rows": {
+          "type": "array",
+          "items": { "type": "array", "items": { "type": "object", "properties": { "text": { "type": "string" }, "colspan": { "type": "integer" }, "header": { "type": "boolean" } } } }
+        },
+        "answer": { "$ref": "#/$defs/commonProps/answer" },
+        "widthPct": { "$ref": "#/$defs/commonProps/widthPct" },
+        "minHeightMm": { "$ref": "#/$defs/commonProps/minHeightMm" },
+        "align": { "$ref": "#/$defs/commonProps/align" }
+      },
+      "additionalProperties": false
+    },
+
+    "imageSlotObject": {
+      "type": "object",
+      "description": "이미지 자리(업로드 대상). ko.json(국어 PoC)에는 실사용 예시가 없다 — sci.json 등을 통한 정식 검증은 S1.3(마이그레이션 감사) 범위이며 이 스키마는 사전 확정한 형태다.",
+      "required": ["id", "type", "placement"],
+      "properties": {
+        "id": { "$ref": "#/$defs/commonProps/id" },
+        "type": { "const": "image-slot" },
+        "placement": { "$ref": "#/$defs/commonProps/placement" },
+        "rect": { "$ref": "#/$defs/commonProps/rect" },
+        "src": { "type": ["string", "null"] },
+        "alt": { "type": "string" },
+        "caption": { "type": "string" },
+        "widthPct": { "$ref": "#/$defs/commonProps/widthPct" },
+        "minHeightMm": { "$ref": "#/$defs/commonProps/minHeightMm" },
+        "align": { "$ref": "#/$defs/commonProps/align" }
+      },
+      "additionalProperties": false
+    },
+
+    "answerAreaObject": {
+      "type": "object",
+      "description": "학생 서술용 빈 공간(밑줄/박스/점). emphasis-box 는 별도 타입으로 신설하지 않고(R5 최소 카탈로그) 구조 분기로 흡수한다 — 내용 없이 빈 여백이면 answer-area, 정적 강조 텍스트를 담으면 richtext(§docs/HANDOFF-object-schema.md 참조).",
+      "required": ["id", "type", "placement", "style"],
+      "properties": {
+        "id": { "$ref": "#/$defs/commonProps/id" },
+        "type": { "const": "answer-area" },
+        "placement": { "$ref": "#/$defs/commonProps/placement" },
+        "rect": { "$ref": "#/$defs/commonProps/rect" },
+        "style": { "type": "string", "enum": ["line", "box", "dots"], "description": "line=밑줄 1개, box=점선 박스, dots=여러 원(자기평가 등)." },
+        "lines": { "type": "integer", "minimum": 1, "default": 1 },
+        "label": { "type": "string" },
+        "widthPct": { "$ref": "#/$defs/commonProps/widthPct" },
+        "minHeightMm": { "$ref": "#/$defs/commonProps/minHeightMm" },
+        "align": { "$ref": "#/$defs/commonProps/align" }
+      },
+      "additionalProperties": false
+    },
+
+    "dividerObject": {
+      "type": "object",
+      "description": "장식용 구분선. ko.json 사용례 없음 — image-slot 과 동일하게 S1.3 마이그레이션 감사에서 별도 검증 필요.",
+      "required": ["id", "type", "placement"],
+      "properties": {
+        "id": { "$ref": "#/$defs/commonProps/id" },
+        "type": { "const": "divider" },
+        "placement": { "$ref": "#/$defs/commonProps/placement" },
+        "rect": { "$ref": "#/$defs/commonProps/rect" },
+        "widthPct": { "$ref": "#/$defs/commonProps/widthPct" },
+        "minHeightMm": { "$ref": "#/$defs/commonProps/minHeightMm" },
+        "align": { "$ref": "#/$defs/commonProps/align" }
+      },
+      "additionalProperties": false
+    },
+
+    "shapeObject": {
+      "type": "object",
+      "description": "자유 도형(현행 src/editor/shapes.js 상속). ko.json 사용례 없음 — S1.3 마이그레이션 감사에서 별도 검증 필요.",
+      "required": ["id", "type", "placement", "rect", "shapeKind"],
+      "properties": {
+        "id": { "$ref": "#/$defs/commonProps/id" },
+        "type": { "const": "shape" },
+        "placement": { "const": "float" },
+        "rect": { "$ref": "#/$defs/commonProps/rect" },
+        "shapeKind": { "type": "string", "enum": ["rect", "ellipse", "line", "arrow"] },
+        "strokeColor": { "type": "string" },
+        "fillColor": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+
+    "richtextObject": {
+      "type": "object",
+      "description": "탈출구. 닫힌 카탈로그가 인식 못 한 블록의 무손실 흡수처(마이그레이션 결정 A1, C-2). 개체화율 게이트(S1.3) 분모에는 포함되되 분자(비-richtext)에서는 제외된다.",
+      "required": ["id", "type", "placement", "html"],
+      "properties": {
+        "id": { "$ref": "#/$defs/commonProps/id" },
+        "type": { "const": "richtext" },
+        "placement": { "$ref": "#/$defs/commonProps/placement" },
+        "rect": { "$ref": "#/$defs/commonProps/rect" },
+        "html": { "type": "string", "description": "원본 블록 HTML 원문(무손실 보존)." },
+        "sourceType": { "type": "string", "description": "마이그레이션 이전 원본 entry.type(감사용, 예: 'directive')." },
+        "answer": { "$ref": "#/$defs/commonProps/answer" },
+        "widthPct": { "$ref": "#/$defs/commonProps/widthPct" },
+        "minHeightMm": { "$ref": "#/$defs/commonProps/minHeightMm" },
+        "align": { "$ref": "#/$defs/commonProps/align" }
+      },
+      "additionalProperties": false
+    },
+
+    "stdBoxObject": {
+      "type": "object",
+      "description": "성취기준 원문 주입 전용(창작 금지, 원칙 3). 슬롯 불변 — 원문 텍스트 자체는 이 개체에 저장하지 않고 codes 참조만 저장, 렌더 시 성취기준 CSV/gepai 에서 주입한다.",
+      "required": ["id", "type", "placement"],
+      "properties": {
+        "id": { "$ref": "#/$defs/commonProps/id" },
+        "type": { "const": "std-box" },
+        "placement": { "const": "flow" },
+        "codes": { "type": "array", "items": { "type": "string" }, "description": "manifest.standards 코드 배열 참조." },
+        "objectives": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "학습 목표 문장 배열(예: '전압과 전류의 관계를 설명할 수 있다.', 2~3개 권장). codes 와 달리 저작 영역이다 — 성취기준을 해당 차시 수업에 맞게 구체화한 문장으로, designer(또는 교사)가 codes 가 가리키는 성취기준에서 도출해 채운다(원칙 3은 '성취기준 원문' 창작 금지만 다루며 objectives 는 그 대상이 아니다). 비어 있으면(하위호환) 렌더러가 현행 성취기준 박스를 그대로 표시한다."
+        },
+        "heading": { "type": "string", "description": "학습목표 박스 제목(기본 '학습 목표'). 학교·교과마다 부르는 이름이 달라 교사가 캔버스에서 직접 고칠 수 있다." },
+        "showStandards": { "type": "boolean", "default": false, "description": "근거 성취기준(코드+원문) 박스를 교사용에 함께 낼지. 기본 false — 현장에서 활동지에 얹는 것은 학습목표뿐이라는 실사용 피드백에 따른 기본값(2026-07-28). true 일 때만 .std-ref 박스를 렌더하며, 그 경우에도 학생용에서는 data-mode CSS 로 숨는다. 표시 여부만 정할 뿐 codes 는 그대로 보존된다." },
+        "widthPct": { "$ref": "#/$defs/commonProps/widthPct" },
+        "minHeightMm": { "$ref": "#/$defs/commonProps/minHeightMm" },
+        "align": { "$ref": "#/$defs/commonProps/align" }
+      },
+      "additionalProperties": false
+    },
+
+    "spacerObject": {
+      "type": "object",
+      "description": "빈 공간(레이아웃 전용). 흐름에서 heightMm 만큼 자리를 차지하고 인쇄에는 아무것도 그리지 않는다. flow 전용 — float 은 흐름을 밀지 않으므로 '빈 공간'이 성립하지 않는다. 자유 배치로 승격된 개체가 비운 자리를 교사가 되찾을 때 쓴다.",
+      "required": ["id", "type", "placement", "heightMm"],
+      "properties": {
+        "id": { "$ref": "#/$defs/commonProps/id" },
+        "type": { "const": "spacer" },
+        "placement": { "const": "flow" },
+        "heightMm": { "type": "number", "exclusiveMinimum": 0, "description": "차지할 세로 높이(mm). 렌더가 height 로 그대로 방출하므로 편집 화면과 인쇄가 같은 높이를 쓴다(R2-1)." },
+        "label": { "type": "string", "description": "편집 화면에만 보이는 설명(인쇄 제외). 예: '오려붙이기 공간'." }
+      },
+      "additionalProperties": false
+    },
+
+    "pageBreakObject": {
+      "type": "object",
+      "description": "페이지 나누기(레이아웃 전용). 이 지점에서 페이지 경계를 강제한다 — 뒤따르는 개체가 새 페이지 첫머리가 되고 나머지는 뒤로 밀린다. 높이 0 이라 인쇄에는 아무것도 남기지 않는다. 페이지 '용량'을 늘리지는 못한다(그건 물리적 한계) — 어디서 끊을지를 정할 뿐이다.",
+      "required": ["id", "type", "placement"],
+      "properties": {
+        "id": { "$ref": "#/$defs/commonProps/id" },
+        "type": { "const": "page-break" },
+        "placement": { "const": "flow" }
+      },
+      "additionalProperties": false
+    }
+  }
+}
