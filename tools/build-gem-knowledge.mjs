@@ -101,7 +101,7 @@ for (const bucket of buckets.values()) {
   const file = join(OUT_DIR, `standards-${bucket.slug}.md`);
   const body = lines.join('\n');
   writeFileSync(file, body, 'utf8');
-  written.push({ file, count: bucket.items.length, bytes: body.length });
+  written.push({ file, count: bucket.items.length, bytes: Buffer.byteLength(body, 'utf8') });
 }
 
 // ── 예시 활동지는 손으로 관리한다(생성하지 않는다) ──────────────────────────

@@ -67,6 +67,9 @@
   #ask { flex: 1; min-width: 160px; font: inherit; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; }
   #ask:focus { outline: 2px solid #b6dbff; outline-offset: -1px; }
   #keyPanel { display: block; background: #fbfcfd; font-size: 12.5px; color: var(--muted); }
+  /* `#keyPanel{display:block}` 이 UA 의 `[hidden]{display:none}` 을 특이도로 눌러 버려서
+     ⚙ 토글이 아무 일도 하지 않았다(라이브 실측). id+속성 선택자로 되돌린다. */
+  #keyPanel[hidden] { display: none; }
   #keyPanel .line { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
   #keyPanel input[type="password"], #modelFilter { flex: 1; min-width: 150px; font: inherit;
     padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; }
@@ -4835,6 +4838,9 @@ return { MIN_ANSWER_LEN, SLICE_LEN, ValidateWorksheet };
   // ── 모델 목록 UI ───────────────────────────────────────────────────────────
   var modelCache = [];
 
+  /** 드롭다운에 한 번에 보일 모델 수 상한(OpenRouter 는 수백 개다 — 나머지는 검색칸으로 찾는다). */
+  var MODEL_SHOW_LIMIT = 200;
+
   function priceLabel(m) {
     if (m.free) return '무료';
     if (!m.price) return '';
@@ -4846,7 +4852,7 @@ return { MIN_ANSWER_LEN, SLICE_LEN, ValidateWorksheet };
     var list = modelCache.filter(function (m) {
       if (!needle) return true;
       return (m.id + ' ' + m.label).toLowerCase().indexOf(needle) !== -1;
-    }).slice(0, 200);
+    }).slice(0, MODEL_SHOW_LIMIT);
 
     el.modelSel.innerHTML = '';
     if (!list.length) {
@@ -4881,7 +4887,13 @@ return { MIN_ANSWER_LEN, SLICE_LEN, ValidateWorksheet };
     prov.listModels(key).then(function (list) {
       modelCache = list;
       fillModelSelect(el.modelFilter.value);
-      if (!quiet) say('ok', '모델 ' + list.length + '개를 불러왔습니다.');
+      if (!quiet) {
+        say('ok', '모델 ' + list.length + '개를 불러왔습니다.'
+          + (list.length > MODEL_SHOW_LIMIT ? ' 목록에는 ' + MODEL_SHOW_LIMIT + '개까지 보입니다 — 검색칸으로 좁히세요.' : ''));
+        if (list.some(function (m) { return m.free; })) {
+          say('muted', '무료 모델은 품질과 한도가 들쭉날쭉합니다. 활동지가 자꾸 실패하면 `flash` 처럼 값싼 유료 모델을 고르세요.');
+        }
+      }
     }).catch(function (e) {
       if (!quiet) say('err', esc(e.message));
     }).then(function () {

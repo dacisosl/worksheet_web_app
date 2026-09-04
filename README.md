@@ -3,10 +3,12 @@
 교사의 한 문장 요청("중2 과학 옴의 법칙 활동지")을 **학생용·교사용 A4 활동지 2벌**로 만듭니다.
 2022 개정 교육과정 성취기준 3,285건을 내장하고, 학생용에서는 정답을 **물리적으로 제거**합니다.
 
-## 지금 바로 쓰기 — 파일 하나
+## 지금 바로 쓰기
 
-**[`gem/worksheet-render.html`](gem/worksheet-render.html)** 을 내려받아 브라우저로 열면 끝입니다.
-설치·서버·계정이 필요 없습니다. 자세한 사용법은 **[gem/README.md](gem/README.md)**.
+### → <https://dacisosl.github.io/worksheet_web_app/>
+
+설치·서버·계정이 필요 없습니다. 파일로 쓰려면 **[`gem/worksheet-render.html`](gem/worksheet-render.html)**
+하나만 내려받아 더블클릭하세요(인터넷 없이도 열립니다). 자세한 사용법은 **[gem/README.md](gem/README.md)**.
 
 활동지 내용을 만드는 방법은 두 가지이고, **조판·정답 제거·인쇄는 두 경로 모두 같은 코드**가 합니다.
 

@@ -246,6 +246,6 @@ mkdirSync(join(ROOT, 'gem'), { recursive: true });
 const outPath = join(ROOT, 'gem', 'worksheet-render.html');
 writeFileSync(outPath, out, 'utf8');
 
-console.log(`✔ ${relative(ROOT, outPath)}  (${(out.length / 1024).toFixed(0)} KB)`);
+console.log(`✔ ${relative(ROOT, outPath)}  (${(Buffer.byteLength(out, 'utf8') / 1024).toFixed(0)} KB)`);
 console.log(`  모듈 ${ordered.length}개 · 테마 ${THEME_FILES.length}종 · 성취기준 ${standards.items.length}건 · v${version}`);
 for (const key of ordered) console.log(`   - ${key} → ${modules.get(key).exports.length} exports`);

@@ -353,6 +353,9 @@ function modelSlot() { return 'wsg.' + providerId() + '.model'; }
 // ── 모델 목록 UI ───────────────────────────────────────────────────────────
 var modelCache = [];
 
+/** 드롭다운에 한 번에 보일 모델 수 상한(OpenRouter 는 수백 개다 — 나머지는 검색칸으로 찾는다). */
+var MODEL_SHOW_LIMIT = 200;
+
 function priceLabel(m) {
   if (m.free) return '무료';
   if (!m.price) return '';
@@ -364,7 +367,7 @@ function fillModelSelect(filter) {
   var list = modelCache.filter(function (m) {
     if (!needle) return true;
     return (m.id + ' ' + m.label).toLowerCase().indexOf(needle) !== -1;
-  }).slice(0, 200);
+  }).slice(0, MODEL_SHOW_LIMIT);
 
   el.modelSel.innerHTML = '';
   if (!list.length) {
@@ -399,7 +402,13 @@ function refreshModels(quiet) {
   prov.listModels(key).then(function (list) {
     modelCache = list;
     fillModelSelect(el.modelFilter.value);
-    if (!quiet) say('ok', '모델 ' + list.length + '개를 불러왔습니다.');
+    if (!quiet) {
+      say('ok', '모델 ' + list.length + '개를 불러왔습니다.'
+        + (list.length > MODEL_SHOW_LIMIT ? ' 목록에는 ' + MODEL_SHOW_LIMIT + '개까지 보입니다 — 검색칸으로 좁히세요.' : ''));
+      if (list.some(function (m) { return m.free; })) {
+        say('muted', '무료 모델은 품질과 한도가 들쭉날쭉합니다. 활동지가 자꾸 실패하면 `flash` 처럼 값싼 유료 모델을 고르세요.');
+      }
+    }
   }).catch(function (e) {
     if (!quiet) say('err', esc(e.message));
   }).then(function () {
