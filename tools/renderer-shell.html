@@ -35,6 +35,9 @@
     --shadow-3: 0 24px 64px rgba(16, 24, 40, .22);
   }
   * { box-sizing: border-box; }
+  /* `[hidden]` 은 UA 스타일시트의 `display:none` 으로 동작하는데, 클래스에 display 를 주면
+     특이도에 밀려 무력화된다(실측: 설정 패널·빈 상태가 안 숨었다). 전역으로 못 박는다. */
+  [hidden] { display: none !important; }
   html, body { height: 100%; margin: 0; }
   body {
     font-family: "Pretendard", "Pretendard Variable", -apple-system, "Malgun Gothic", "맑은 고딕", system-ui, sans-serif;
@@ -160,8 +163,8 @@
   }
   .composer-box:focus-within { border-color: #b9cbf5; box-shadow: 0 0 0 3px rgba(47, 109, 246, .12); }
   #ask {
-    flex: 1; border: 0; outline: none; resize: none; background: none;
-    max-height: 168px; padding: 6px 0; line-height: 1.55; font-size: 14px;
+    flex: 1; border: 0; outline: none; resize: none; background: none; align-self: flex-end;
+    height: 34px; max-height: 168px; padding: 6px 0; line-height: 1.55; font-size: 14px;
   }
   #ask::placeholder { color: var(--ink-3); }
   .send {

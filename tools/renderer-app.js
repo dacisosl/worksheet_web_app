@@ -390,7 +390,34 @@
         + '이 벌은 출력이 막혀 있습니다.</body>');
       return;
     }
-    writeIntoFrame(el.frame, html);
+    writeIntoFrame(el.frame, html).then(fitPreview);
+  }
+
+  /**
+   * A4(210mm ≈ 794px)는 미리보기 폭보다 넓어 잘려 보인다 — 화면에서만 축소해 한 장이 다 보이게 한다.
+   * **`@media screen` 안에만 넣는 것이 핵심**이다: 인쇄는 같은 문서를 쓰므로 zoom 이 인쇄까지
+   * 새면 조판이 어긋난다(측정·쪽 나눔은 이미 끝난 상태라 배율만 화면에 걸어야 한다).
+   */
+  function fitPreview() {
+    var win = el.frame.contentWindow;
+    var doc = win && win.document;
+    if (!doc || !doc.body) return;
+    var sheet = doc.querySelector('.sheet');
+    if (!sheet) return;
+
+    var style = doc.getElementById('wsg-fit');
+    if (!style) {
+      style = doc.createElement('style');
+      style.id = 'wsg-fit';
+      style.setAttribute('media', 'screen');
+      doc.head.appendChild(style);
+    }
+    style.textContent = '';                       // 배율 없이 실제 폭을 잰다
+    var paperPx = sheet.offsetWidth;
+    if (!paperPx) return;
+    var available = el.frame.clientWidth - 28;    // 좌우 여유
+    var factor = Math.min(1, available / paperPx);
+    if (factor < 0.99) style.textContent = 'body{zoom:' + factor.toFixed(4) + '}';
   }
 
   function syncTabs() {
@@ -436,14 +463,21 @@
   }
 
   // ── 입력창 ──────────────────────────────────────────────────────────────
+  var ASK_MIN_H = 34;   // 한 줄
+  var ASK_MAX_H = 168;  // 그 이상은 스크롤
   function autoGrow() {
     el.ask.style.height = 'auto';
-    el.ask.style.height = Math.min(el.ask.scrollHeight, 168) + 'px';
+    var h = Math.max(ASK_MIN_H, Math.min(el.ask.scrollHeight, ASK_MAX_H));
+    el.ask.style.height = h + 'px';
     el.btnAsk.disabled = el.ask.value.trim() === '';
   }
 
   // ── 이벤트 ──────────────────────────────────────────────────────────────
   el.ask.addEventListener('input', autoGrow);
+  window.addEventListener('resize', function () {
+    clearTimeout(fitPreview._t);
+    fitPreview._t = setTimeout(fitPreview, 120);
+  });
   el.btnPrint.addEventListener('click', printCurrent);
   el.btnSaveHtml.addEventListener('click', saveHtml);
   el.tabStudent.addEventListener('click', function () { state.mode = 'student'; syncTabs(); preview(); });
@@ -513,5 +547,5 @@
   /*__AI_MODULE__*/
 
   syncTabs();
-  autoGrow();
+  requestAnimationFrame(autoGrow);
 })();
