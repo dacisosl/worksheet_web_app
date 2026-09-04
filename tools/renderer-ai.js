@@ -429,30 +429,34 @@ function syncProviderUi() {
 // ── 실행 ──────────────────────────────────────────────────────────────────
 function ask() {
   var request = el.ask.value.trim();
-  if (!request) { el.ask.focus(); return; }
-  if (chat.busy) return;
+  if (!request || chat.busy) return;
 
   var key = lsGet(keySlot());
   if (!key) {
-    el.keyPanel.hidden = false;
-    clearLog();
-    say('err', PROVIDERS[providerId()].label + ' 키를 먼저 저장하세요(아래 ⚙ 영역).');
-    say('muted', '키가 없으면 Gem·ChatGPT 에서 만든 JSON을 아래 칸에 붙여넣는 방법을 쓰세요.');
-    el.apiKey.focus();
+    pushUser(request);
+    pushAI('먼저 <b>AI 서비스와 키</b>를 등록해 주세요. 설정 창을 열어 두었습니다.'
+      + '<br>키 없이 쓰려면 설정의 <b>JSON 직접 넣기</b> 탭에서 챗봇이 만든 활동지를 붙여넣으세요.');
+    openSettings('ai');
     return;
   }
   var model = el.modelSel.value || lsGet(modelSlot());
   if (!model) {
-    el.keyPanel.hidden = false;
-    say('err', '사용할 모델을 고르세요(⚙ → 목록 새로고침).');
+    pushUser(request);
+    pushAI('사용할 <b>모델</b>을 골라 주세요. 설정에서 [목록 새로고침] 을 누르면 목록이 채워집니다.');
+    openSettings('ai');
     return;
   }
 
-  clearLog();
+  pushUser(request);
+  el.ask.value = '';
+  autoGrow();
+
   var isFollowUp = chat.history.length > 0;
   var userText = request;
+  beginActivity(isFollowUp ? '수정 요청 전송' : '성취기준 조회 · 초안 요청');
+
   if (isFollowUp) {
-    say('muted', '이전 활동지를 고쳐 달라고 요청합니다. 처음부터 새로 만들려면 [새로] 를 누르세요.');
+    say('muted', '앞서 만든 활동지를 함께 보내 고쳐 달라고 요청합니다(처음부터 새로 만들려면 ＋ 버튼).');
   } else {
     var found = searchStandards(request, STD_SEARCH_LIMIT);
     userText = firstUserMessage(request, found);
@@ -466,12 +470,12 @@ function ask() {
       say('warn', '교과를 좁히지 못했습니다 — "중2 과학 …"처럼 학교급·교과를 넣으면 성취기준이 더 정확해집니다.');
     }
   }
-  say('muted', '<span class="spin"></span>' + esc(model) + ' 에 요청 중…');
+  say('muted', esc(model) + ' 에 요청했습니다.');
 
   var history = chat.history.concat([{ role: 'user', text: userText }]);
   chat.busy = true;
   el.btnAsk.disabled = true;
-  el.btnAsk.textContent = '만드는 중…';
+  var typing = pushTyping();
 
   provider().generate(key, model, systemInstruction(), history, true).then(function (out) {
     if (!out.text || !out.text.trim()) {
@@ -485,19 +489,21 @@ function ask() {
     var json = stripFence(out.text);
     el.src.value = json;
     chat.history = trimHistory(history.concat([{ role: 'model', text: json }]));
-    el.ask.value = '';
-    say('ok', '활동지 초안을 받았습니다 — 이어서 검사·조판합니다.');
-    run();
+    say('ok', '초안을 받았습니다(' + Math.round(json.length / 1024) + 'KB).');
+    typing.remove();
+    run({ silentUser: true });
   }).catch(function (e) {
     var msg = e && e.message ? e.message : String(e);
+    typing.remove();
     say('err', esc(msg));
     if (/Failed to fetch|NetworkError|network/i.test(msg)) {
-      say('muted', '인터넷 연결 또는 학교 방화벽을 확인하세요. 오프라인에서는 Gem 복붙 경로를 쓰세요.');
+      say('muted', '인터넷 연결이나 학교 방화벽을 확인하세요. 오프라인에서는 설정의 JSON 직접 넣기를 쓰세요.');
     }
+    setActivity('err', '요청 실패');
+    pushAI('요청이 실패했습니다: ' + esc(msg));
   }).then(function () {
     chat.busy = false;
-    el.btnAsk.disabled = false;
-    el.btnAsk.textContent = 'AI로 만들기';
+    autoGrow();
   });
 }
 
@@ -510,33 +516,31 @@ function trimHistory(list) {
 // ── 이벤트 ────────────────────────────────────────────────────────────────
 el.btnAsk.addEventListener('click', ask);
 el.ask.addEventListener('keydown', function (e) {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ask(); }
+  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); ask(); }
 });
 el.btnNew.addEventListener('click', function () {
   chat.history = [];
   el.ask.value = '';
-  clearLog();
-  say('muted', '대화 맥락을 비웠습니다. 새 활동지 요청을 입력하세요.');
+  el.ask.placeholder = '중2 과학 옴의 법칙 활동지 만들어줘';
+  el.src.value = '';
+  autoGrow();
+  resetThread();
+  setOutputs(null);
   el.ask.focus();
-});
-el.btnKeyToggle.addEventListener('click', function () {
-  el.keyPanel.hidden = !el.keyPanel.hidden;
-  if (!el.keyPanel.hidden) el.apiKey.focus();
 });
 el.providerSel.addEventListener('change', function () {
   lsSet(LS_PROVIDER, el.providerSel.value);
   chat.history = [];
   syncProviderUi();
-  say('muted', PROVIDERS[providerId()].label + ' 로 바꿨습니다. 키를 저장하고 모델을 고르세요.');
   refreshModels(true);
 });
 el.btnKeySave.addEventListener('click', function () {
   var key = el.apiKey.value.trim();
-  if (!key) { say('err', '키를 입력하세요.'); return; }
+  if (!key) { el.apiKey.focus(); return; }
   lsSet(keySlot(), key);
   el.apiKey.value = '';
   el.apiKey.placeholder = '저장됨 (다시 입력하면 교체)';
-  clearLog();
+  beginActivity(PROVIDERS[providerId()].label + ' 키 저장');
   say('ok', '키를 이 브라우저에 저장했습니다. 모델 목록을 불러옵니다…');
   refreshModels(false);
 });
@@ -545,7 +549,6 @@ el.btnKeyClear.addEventListener('click', function () {
   lsDel(modelSlot());
   el.apiKey.value = '';
   el.apiKey.placeholder = providerId() === 'gemini' ? 'AIza…' : 'sk-or-…';
-  say('muted', '저장된 키를 지웠습니다.');
 });
 el.btnModelReload.addEventListener('click', function () { refreshModels(false); });
 el.modelFilter.addEventListener('input', function () { fillModelSelect(el.modelFilter.value); });

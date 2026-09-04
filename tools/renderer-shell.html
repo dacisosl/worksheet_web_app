@@ -3,151 +3,452 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>활동지 렌더러 · worksheet-grab __WSG_VERSION__</title>
+<title>활동지 만들기 · worksheet-grab __WSG_VERSION__</title>
+<link rel="stylesheet" as="style" crossorigin
+  href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <style>
+  /* ══ 토큰 ══════════════════════════════════════════════════════════════ */
   :root {
-    --ink: #1f2328; --muted: #656d76; --line: #d8dee4; --bg: #f6f8fa;
-    --ok: #1a7f37; --warn: #9a6700; --err: #cf222e; --accent: #0969da;
+    --ink: #16181d;
+    --ink-2: #5b6472;
+    --ink-3: #8b95a5;
+    --line: #e6e9ef;
+    --line-2: #f0f2f6;
+    --bg: #ffffff;
+    --bg-chat: #fbfbfc;
+    --bg-stage: #eceef2;
+    --accent: #2f6df6;
+    --accent-ink: #ffffff;
+    --accent-soft: #eef3ff;
+    --ok: #0f7b4a;
+    --ok-soft: #e9f7ef;
+    --warn: #9a6400;
+    --warn-soft: #fdf3e2;
+    --err: #c8281f;
+    --err-soft: #fdeceb;
+    --r-sm: 8px;
+    --r-md: 12px;
+    --r-lg: 18px;
+    --r-full: 999px;
+    --shadow-1: 0 1px 2px rgba(16, 24, 40, .05), 0 1px 3px rgba(16, 24, 40, .06);
+    --shadow-2: 0 8px 24px rgba(16, 24, 40, .10), 0 2px 6px rgba(16, 24, 40, .06);
+    --shadow-3: 0 24px 64px rgba(16, 24, 40, .22);
   }
   * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; }
+  html, body { height: 100%; margin: 0; }
   body {
-    font-family: "Pretendard", "Malgun Gothic", "맑은 고딕", system-ui, sans-serif;
-    color: var(--ink); background: var(--bg); font-size: 14px; line-height: 1.5;
-    display: flex; flex-direction: column; word-break: keep-all;
+    font-family: "Pretendard", "Pretendard Variable", -apple-system, "Malgun Gothic", "맑은 고딕", system-ui, sans-serif;
+    font-size: 14px; line-height: 1.6; color: var(--ink); background: var(--bg);
+    -webkit-font-smoothing: antialiased; word-break: keep-all;
   }
-  header {
-    display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
-    padding: 10px 16px; background: #fff; border-bottom: 1px solid var(--line);
+  button, input, textarea, select { font: inherit; color: inherit; }
+  button { cursor: pointer; background: none; border: 0; padding: 0; }
+  ::selection { background: #cfe0ff; }
+
+  /* ══ 레이아웃 ══════════════════════════════════════════════════════════ */
+  .app { display: grid; grid-template-columns: minmax(340px, 30%) 1fr; height: 100%; }
+  @media (max-width: 900px) { .app { grid-template-columns: 1fr; grid-template-rows: 1fr auto; } }
+
+  /* ══ 왼쪽: 채팅 ════════════════════════════════════════════════════════ */
+  .chat {
+    display: flex; flex-direction: column; min-width: 0; min-height: 0;
+    background: var(--bg-chat); border-right: 1px solid var(--line);
   }
-  header h1 { font-size: 15px; margin: 0; }
-  header .ver { color: var(--muted); font-size: 12px; }
-  header .hint { color: var(--muted); font-size: 12px; margin-left: auto; }
-  main { flex: 1; display: grid; grid-template-columns: minmax(320px, 34%) 1fr; min-height: 0; }
-  .pane { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
-  .pane.left { border-right: 1px solid var(--line); background: #fff; }
-  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 10px 12px; border-bottom: 1px solid var(--line); }
-  .row.grow { flex: 1; min-height: 0; padding: 0; display: block; }
-  textarea {
-    width: 100%; height: 100%; border: 0; padding: 12px; resize: none; outline: none;
-    font-family: ui-monospace, Consolas, "Courier New", monospace; font-size: 12px; line-height: 1.5;
+  .chat-head {
+    display: flex; align-items: center; gap: 10px; padding: 12px 14px;
+    border-bottom: 1px solid var(--line-2); background: var(--bg-chat);
   }
-  textarea.drop { background: #eaf5ff; }
-  button {
-    font: inherit; padding: 6px 12px; border: 1px solid var(--line); border-radius: 6px;
-    background: #fff; cursor: pointer;
+  .brand { display: flex; align-items: center; gap: 9px; min-width: 0; }
+  .brand .mark {
+    width: 28px; height: 28px; border-radius: 9px; display: grid; place-items: center;
+    background: linear-gradient(140deg, #4b82ff, #2f6df6 55%, #1f52c9);
+    color: #fff; font-size: 13px; font-weight: 800; letter-spacing: -.5px; flex: none;
+    box-shadow: 0 2px 6px rgba(47, 109, 246, .35);
   }
-  button:hover:not(:disabled) { background: var(--bg); }
-  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
-  button.primary:hover:not(:disabled) { background: #0860ca; }
-  button:disabled { opacity: .45; cursor: default; }
-  label.file { display: inline-flex; align-items: center; }
+  .brand .name { font-weight: 700; font-size: 14px; letter-spacing: -.2px; }
+  .brand .sub { font-size: 11px; color: var(--ink-3); margin-top: -3px; }
+  .head-actions { margin-left: auto; display: flex; gap: 2px; }
+  .icon-btn {
+    width: 32px; height: 32px; border-radius: var(--r-sm); display: grid; place-items: center;
+    color: var(--ink-2); transition: background .12s, color .12s;
+  }
+  .icon-btn:hover { background: #eef0f4; color: var(--ink); }
+  .icon-btn svg { width: 17px; height: 17px; }
+
+  .thread { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 18px 14px 6px; }
+  .thread::-webkit-scrollbar { width: 10px; }
+  .thread::-webkit-scrollbar-thumb { background: #dde1e8; border: 3px solid var(--bg-chat); border-radius: var(--r-full); }
+
+  /* 빈 상태 */
+  .welcome { padding: 8vh 6px 0; text-align: center; }
+  .welcome h1 { font-size: 21px; font-weight: 750; letter-spacing: -.5px; margin: 0 0 6px; }
+  .welcome p { color: var(--ink-2); margin: 0 0 20px; font-size: 13px; }
+  .chips { display: flex; flex-direction: column; gap: 7px; }
+  .chip {
+    text-align: left; padding: 10px 13px; border: 1px solid var(--line); border-radius: var(--r-md);
+    background: var(--bg); color: var(--ink); font-size: 13px; box-shadow: var(--shadow-1);
+    transition: border-color .12s, transform .12s, box-shadow .12s;
+  }
+  .chip:hover { border-color: #c9d5f0; transform: translateY(-1px); box-shadow: var(--shadow-2); }
+  .chip b { color: var(--accent); font-weight: 700; }
+
+  /* 말풍선 */
+  .msg { margin-bottom: 14px; display: flex; }
+  .msg.user { justify-content: flex-end; }
+  .msg.user .body {
+    background: var(--accent); color: var(--accent-ink); padding: 9px 14px;
+    border-radius: var(--r-lg) var(--r-lg) 5px var(--r-lg); max-width: 88%;
+    box-shadow: 0 2px 8px rgba(47, 109, 246, .25); white-space: pre-wrap;
+  }
+  .msg.ai { gap: 9px; }
+  .msg.ai .avatar {
+    width: 24px; height: 24px; border-radius: 7px; flex: none; margin-top: 1px;
+    background: #fff; border: 1px solid var(--line); display: grid; place-items: center;
+    color: var(--accent);
+  }
+  .msg.ai .avatar svg { width: 14px; height: 14px; }
+  .msg.ai .body { max-width: calc(100% - 34px); padding-top: 1px; }
+  .msg.ai .body b { font-weight: 700; }
+  .msg .meta { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .tag {
+    font-size: 11.5px; padding: 2px 9px; border-radius: var(--r-full);
+    background: var(--line-2); color: var(--ink-2); font-variant-numeric: tabular-nums;
+  }
+  .tag.ok { background: var(--ok-soft); color: var(--ok); }
+
+  /* 타이핑 표시 */
+  .typing { display: inline-flex; gap: 4px; align-items: center; height: 22px; }
+  .typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--ink-3); animation: bounce 1.2s infinite; }
+  .typing i:nth-child(2) { animation-delay: .15s; }
+  .typing i:nth-child(3) { animation-delay: .3s; }
+  @keyframes bounce { 0%, 60%, 100% { opacity: .28; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-3px); } }
+
+  /* 진행 카드(정규화·검증·조판 기록) */
+  .card {
+    border: 1px solid var(--line); border-radius: var(--r-md); background: var(--bg);
+    margin: 0 0 14px 33px; overflow: hidden; box-shadow: var(--shadow-1);
+  }
+  .card > summary {
+    list-style: none; cursor: pointer; padding: 9px 12px; display: flex; align-items: center; gap: 8px;
+    font-size: 12.5px; color: var(--ink-2); user-select: none;
+  }
+  .card > summary::-webkit-details-marker { display: none; }
+  .card > summary .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-3); flex: none; }
+  .card[data-state="ok"] > summary .dot { background: var(--ok); }
+  .card[data-state="warn"] > summary .dot { background: var(--warn); }
+  .card[data-state="err"] > summary .dot { background: var(--err); }
+  .card > summary .chev { margin-left: auto; color: var(--ink-3); transition: transform .15s; }
+  .card[open] > summary .chev { transform: rotate(180deg); }
+  .card .lines { padding: 2px 12px 11px; border-top: 1px solid var(--line-2); }
+  .card .lines p { margin: 6px 0 0; font-size: 12.5px; line-height: 1.55; }
+  .card .lines p:first-child { margin-top: 9px; }
+  .card .lines .t-ok { color: var(--ok); }
+  .card .lines .t-warn { color: var(--warn); }
+  .card .lines .t-err { color: var(--err); font-weight: 600; }
+  .card .lines .t-muted { color: var(--ink-2); }
+  code {
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: .92em;
+    background: var(--line-2); padding: 1px 5px; border-radius: 5px;
+  }
+
+  /* 입력창 */
+  .composer { padding: 10px 14px 14px; background: linear-gradient(to top, var(--bg-chat) 65%, transparent); }
+  .composer-box {
+    display: flex; align-items: flex-end; gap: 8px; padding: 8px 8px 8px 14px;
+    background: var(--bg); border: 1px solid var(--line); border-radius: 22px;
+    box-shadow: var(--shadow-1); transition: border-color .12s, box-shadow .12s;
+  }
+  .composer-box:focus-within { border-color: #b9cbf5; box-shadow: 0 0 0 3px rgba(47, 109, 246, .12); }
+  #ask {
+    flex: 1; border: 0; outline: none; resize: none; background: none;
+    max-height: 168px; padding: 6px 0; line-height: 1.55; font-size: 14px;
+  }
+  #ask::placeholder { color: var(--ink-3); }
+  .send {
+    width: 32px; height: 32px; flex: none; border-radius: 50%; display: grid; place-items: center;
+    background: var(--accent); color: #fff; transition: background .12s, opacity .12s;
+  }
+  .send:hover:not(:disabled) { background: #2560e0; }
+  .send:disabled { background: #cdd3dd; cursor: default; }
+  .send svg { width: 16px; height: 16px; }
+  .composer-note { margin: 8px 4px 0; font-size: 11.5px; color: var(--ink-3); text-align: center; }
+  .composer-note button { color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; }
+  .composer-note button:hover { color: var(--accent); }
+
+  /* ══ 오른쪽: 뷰어 ══════════════════════════════════════════════════════ */
+  .viewer { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--bg-stage); }
+  .viewer-head {
+    display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: var(--bg);
+    border-bottom: 1px solid var(--line); flex-wrap: wrap;
+  }
+  .segmented { display: inline-flex; background: var(--line-2); border-radius: var(--r-sm); padding: 3px; }
+  .segmented button {
+    padding: 5px 15px; border-radius: 6px; font-size: 13px; font-weight: 600; color: var(--ink-2);
+    transition: background .12s, color .12s, box-shadow .12s;
+  }
+  .segmented button[aria-selected="true"] { background: var(--bg); color: var(--ink); box-shadow: var(--shadow-1); }
+  .segmented button:disabled { opacity: .4; cursor: default; }
+  .pill {
+    font-size: 11.5px; color: var(--ink-2); background: var(--line-2);
+    border-radius: var(--r-full); padding: 3px 10px; font-variant-numeric: tabular-nums;
+  }
+  .grow { flex: 1; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: var(--r-sm);
+    border: 1px solid var(--line); background: var(--bg); font-size: 13px; font-weight: 600;
+    box-shadow: var(--shadow-1); transition: background .12s, border-color .12s;
+  }
+  .btn:hover:not(:disabled) { background: #f7f8fa; border-color: #d8dde6; }
+  .btn:disabled { opacity: .45; cursor: default; box-shadow: none; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary:hover:not(:disabled) { background: #2560e0; border-color: #2560e0; }
+  .btn svg { width: 15px; height: 15px; }
+
+  .stage { flex: 1; min-height: 0; position: relative; }
+  #frame { width: 100%; height: 100%; border: 0; display: block; background: var(--bg-stage); }
+  .stage-empty {
+    position: absolute; inset: 0; display: grid; place-content: center; justify-items: center;
+    text-align: center; padding: 24px; color: var(--ink-2); pointer-events: none;
+  }
+  .stage-empty .paper {
+    width: 128px; height: 176px; background: #fff; border-radius: 4px; box-shadow: var(--shadow-2);
+    margin-bottom: 18px; padding: 14px 12px; display: flex; flex-direction: column; gap: 7px;
+  }
+  .stage-empty .paper i { display: block; height: 5px; border-radius: 3px; background: #e9ecf1; }
+  .stage-empty .paper i:nth-child(1) { width: 62%; height: 9px; background: #d8e2f8; }
+  .stage-empty .paper i:nth-child(2) { width: 100%; }
+  .stage-empty .paper i:nth-child(3) { width: 88%; }
+  .stage-empty .paper i:nth-child(4) { width: 94%; }
+  .stage-empty .paper i:nth-child(5) { width: 46%; }
+  .stage-empty .paper i:nth-child(6) { width: 100%; margin-top: 6px; height: 26px; border-radius: 5px; }
+  .stage-empty h2 { font-size: 15px; font-weight: 700; color: var(--ink); margin: 0 0 4px; }
+  .stage-empty p { margin: 0; font-size: 13px; }
+
+  /* ══ 설정 모달 ═════════════════════════════════════════════════════════ */
+  .modal { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 20px; }
+  .modal[hidden] { display: none; }
+  .modal .veil { position: absolute; inset: 0; background: rgba(16, 24, 40, .42); backdrop-filter: blur(2px); }
+  .modal .sheet {
+    position: relative; width: min(620px, 100%); max-height: min(88vh, 780px); display: flex; flex-direction: column;
+    background: var(--bg); border-radius: 16px; box-shadow: var(--shadow-3); overflow: hidden;
+    animation: pop .16s ease-out;
+  }
+  @keyframes pop { from { opacity: 0; transform: translateY(8px) scale(.985); } }
+  .sheet-head { display: flex; align-items: center; padding: 15px 16px; border-bottom: 1px solid var(--line); }
+  .sheet-head h2 { font-size: 15px; font-weight: 700; margin: 0; }
+  .sheet-tabs { display: flex; gap: 4px; padding: 10px 12px 0; }
+  .sheet-tabs button {
+    padding: 7px 13px; border-radius: var(--r-sm); font-size: 13px; font-weight: 600; color: var(--ink-2);
+  }
+  .sheet-tabs button[aria-selected="true"] { background: var(--accent-soft); color: var(--accent); }
+  .sheet-body { padding: 14px 16px 18px; overflow-y: auto; }
+  .pane[hidden] { display: none; }
+  .field { margin-bottom: 15px; }
+  .field > label { display: block; font-size: 12px; font-weight: 700; color: var(--ink-2); margin-bottom: 6px; }
+  .field .hint { font-size: 12px; color: var(--ink-3); margin-top: 6px; line-height: 1.55; }
+  .field .hint a { color: var(--accent); }
+  .row { display: flex; gap: 7px; align-items: center; flex-wrap: wrap; }
+  .input, select.input {
+    flex: 1; min-width: 0; padding: 8px 11px; border: 1px solid var(--line); border-radius: var(--r-sm);
+    background: var(--bg); outline: none; font-size: 13px;
+  }
+  .input:focus { border-color: #b9cbf5; box-shadow: 0 0 0 3px rgba(47, 109, 246, .12); }
+  input[type="password"].input { font-family: ui-monospace, Consolas, monospace; letter-spacing: .04em; }
+  select.input { cursor: pointer; }
+  #src {
+    width: 100%; height: 240px; resize: vertical; padding: 11px; border: 1px solid var(--line);
+    border-radius: var(--r-sm); outline: none; background: #fcfcfd;
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; line-height: 1.55;
+  }
+  #src:focus { border-color: #b9cbf5; box-shadow: 0 0 0 3px rgba(47, 109, 246, .12); }
+  #src.drop { background: var(--accent-soft); border-color: var(--accent); }
+  .notice {
+    font-size: 12px; line-height: 1.6; padding: 10px 12px; border-radius: var(--r-sm);
+    background: var(--warn-soft); color: var(--warn); border: 1px solid #f3e3c4;
+  }
+  .notice b { font-weight: 700; }
   label.file input { display: none; }
-  select { font: inherit; padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
-  .tabs { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
-  .tabs button { border: 0; border-radius: 0; padding: 6px 14px; }
-  .tabs button[aria-selected="true"] { background: var(--ink); color: #fff; }
-  #log { max-height: 34vh; overflow: auto; padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 12.5px; }
-  #log:empty { display: none; }
-  #log p { margin: 3px 0; }
-  #log .t-ok { color: var(--ok); }
-  #log .t-warn { color: var(--warn); }
-  #log .t-err { color: var(--err); font-weight: 600; }
-  #log .t-muted { color: var(--muted); }
-  #log code { background: var(--bg); padding: 0 3px; border-radius: 3px; }
-  #frameWrap { flex: 1; min-height: 0; background: #eee; position: relative; }
-  #frame { width: 100%; height: 100%; border: 0; background: #eee; }
-  #empty {
-    position: absolute; inset: 0; display: grid; place-content: center; text-align: center;
-    color: var(--muted); font-size: 13px; padding: 20px; pointer-events: none;
+  .spin {
+    display: inline-block; width: 11px; height: 11px; vertical-align: -1px; margin-right: 5px;
+    border: 2px solid #cfd6e2; border-top-color: var(--accent); border-radius: 50%;
+    animation: sp .7s linear infinite;
   }
-  #measure { position: fixed; left: -12000px; top: 0; width: 900px; height: 1400px; border: 0; visibility: hidden; }
-  .pill { font-size: 11.5px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; }
-  .row.ai { gap: 6px; background: #fbfcfd; }
-  #ask { flex: 1; min-width: 160px; font: inherit; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; }
-  #ask:focus { outline: 2px solid #b6dbff; outline-offset: -1px; }
-  #keyPanel { display: block; background: #fbfcfd; font-size: 12.5px; color: var(--muted); }
-  /* `#keyPanel{display:block}` 이 UA 의 `[hidden]{display:none}` 을 특이도로 눌러 버려서
-     ⚙ 토글이 아무 일도 하지 않았다(라이브 실측). id+속성 선택자로 되돌린다. */
-  #keyPanel[hidden] { display: none; }
-  #keyPanel .line { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
-  #keyPanel input[type="password"], #modelFilter { flex: 1; min-width: 150px; font: inherit;
-    padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; }
-  #keyPanel input[type="password"] { font-family: ui-monospace, Consolas, monospace; }
-  #modelSel { max-width: 46%; }
-  #keyPanel a { color: var(--accent); }
-  #keyPanel .warn { color: var(--warn); }
-  .spin { display: inline-block; width: 11px; height: 11px; border: 2px solid #c9d4e0; border-top-color: var(--accent);
-    border-radius: 50%; animation: sp .7s linear infinite; vertical-align: -1px; margin-right: 5px; }
   @keyframes sp { to { transform: rotate(360deg); } }
+
+  #measure { position: fixed; left: -12000px; top: 0; width: 900px; height: 1400px; border: 0; visibility: hidden; }
 </style>
 </head>
 <body>
-<header>
-  <h1>활동지 렌더러</h1>
-  <span class="ver">worksheet-grab __WSG_VERSION__ · 학생용/교사용 분기 · A4 인쇄</span>
-  <span class="hint">챗봇이 준 활동지 JSON을 붙여넣고 <b>검사·조판</b> → <b>인쇄</b>에서 “PDF로 저장”</span>
-</header>
 
-<main>
-  <section class="pane left">
-    <div class="row ai">
-      <input id="ask" type="text" placeholder="예: 중2 과학 옴의 법칙 활동지 만들어줘" autocomplete="off">
-      <button id="btnAsk" class="primary">AI로 만들기</button>
-      <button id="btnNew" title="대화 맥락을 비우고 새 활동지부터 시작">새로</button>
-      <button id="btnKeyToggle" title="API 키·모델 설정">⚙</button>
-    </div>
-    <div id="keyPanel" class="row" hidden>
-      <div class="line">
-        <label for="providerSel">서비스</label>
-        <select id="providerSel">
-          <option value="gemini">Google Gemini API</option>
-          <option value="openrouter">OpenRouter</option>
-        </select>
-        <span id="keyHint"></span>
+<div class="app">
+  <!-- ══ 채팅 ══ -->
+  <aside class="chat">
+    <div class="chat-head">
+      <div class="brand">
+        <span class="mark">활</span>
+        <div>
+          <div class="name">활동지 만들기</div>
+          <div class="sub">worksheet-grab __WSG_VERSION__</div>
+        </div>
       </div>
-      <div class="line">
-        <input id="apiKey" type="password" placeholder="AIza…" autocomplete="off" spellcheck="false">
-        <button id="btnKeySave">저장</button>
-        <button id="btnKeyClear">지우기</button>
-      </div>
-      <div class="line">
-        <label for="modelSel">모델</label>
-        <select id="modelSel"><option value="">[목록 새로고침] 을 누르세요</option></select>
-        <input id="modelFilter" type="text" placeholder="모델 검색 (flash, free, claude…)" autocomplete="off">
-        <button id="btnModelReload">목록 새로고침</button>
-      </div>
-      <div>
-        키는 <b>이 브라우저에만</b> 저장되고 선택한 서비스로만 전송됩니다. 공용 PC 에서는 쓰고 나서 [지우기]를 누르세요.
-        <span class="warn">· 학생 실명·개인정보는 입력하지 마세요.</span>
+      <div class="head-actions">
+        <button id="btnNew" class="icon-btn" title="새 대화 시작" aria-label="새 대화 시작">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+        <button id="btnSettings" class="icon-btn" title="설정" aria-label="설정">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 8.9 19.3a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.7 8.9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.56 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg>
+        </button>
       </div>
     </div>
-    <div class="row">
-      <button id="btnRun" class="primary">검사 · 조판</button>
-      <label class="file"><button type="button" onclick="this.parentNode.querySelector('input').click()">파일 열기</button><input id="fileIn" type="file" accept=".json,.txt,application/json"></label>
-      <button id="btnSample">예시 넣기</button>
-      <button id="btnClear">비우기</button>
-    </div>
-    <div class="row grow"><textarea id="src" spellcheck="false" placeholder='{ "docTitle": "…", "themeName": "sci", "pages": [ { "flow": [ … ] } ] }'></textarea></div>
-  </section>
 
-  <section class="pane">
-    <div class="row">
-      <span class="tabs">
-        <button id="tabStudent" aria-selected="true">학생용</button>
-        <button id="tabTeacher" aria-selected="false">교사용</button>
-      </span>
-      <button id="btnPrint" disabled>인쇄 (PDF로 저장)</button>
-      <button id="btnSaveHtml" disabled>HTML 저장</button>
+    <div id="thread" class="thread">
+      <div id="welcome" class="welcome">
+        <h1>어떤 활동지를 만들까요?</h1>
+        <p>학교급·교과·주제를 한 줄로 적어 주세요.</p>
+        <div class="chips">
+          <button class="chip" data-ask="중2 과학 옴의 법칙 활동지 만들어줘"><b>중2 과학</b> 옴의 법칙 활동지</button>
+          <button class="chip" data-ask="초5 수학 분수의 나눗셈 활동지 만들어줘"><b>초5 수학</b> 분수의 나눗셈 활동지</button>
+          <button class="chip" data-ask="중3 국어 글 요약하기 활동지 만들어줘"><b>중3 국어</b> 글 요약하기 활동지</button>
+          <button class="chip" data-ask="고1 통합사회 기후변화 활동지 만들어줘"><b>고1 통합사회</b> 기후변화 활동지</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="composer">
+      <div class="composer-box">
+        <textarea id="ask" rows="1" placeholder="중2 과학 옴의 법칙 활동지 만들어줘" autocomplete="off"></textarea>
+        <button id="btnAsk" class="send" title="보내기 (Enter)" aria-label="보내기">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+        </button>
+      </div>
+      <p class="composer-note">
+        학생 실명·개인정보는 넣지 마세요 · <button id="btnSettingsInline">모델·키 설정</button>
+      </p>
+    </div>
+  </aside>
+
+  <!-- ══ 뷰어 ══ -->
+  <main class="viewer">
+    <div class="viewer-head">
+      <div class="segmented" role="tablist" aria-label="출력 벌">
+        <button id="tabStudent" role="tab" aria-selected="true">학생용</button>
+        <button id="tabTeacher" role="tab" aria-selected="false">교사용</button>
+      </div>
       <span id="pageInfo" class="pill" hidden></span>
+      <span class="grow"></span>
+      <button id="btnSaveHtml" class="btn" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+        HTML
+      </button>
+      <button id="btnPrint" class="btn primary" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg>
+        인쇄 · PDF 저장
+      </button>
     </div>
-    <div id="log"></div>
-    <div id="frameWrap">
+    <div class="stage">
       <iframe id="frame" title="활동지 미리보기"></iframe>
-      <div id="empty">왼쪽에 활동지 JSON을 붙여넣고 <b>검사 · 조판</b>을 누르세요.</div>
+      <div id="empty" class="stage-empty">
+        <div class="paper" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <h2>아직 만든 활동지가 없습니다</h2>
+        <p>왼쪽에 요청을 적으면 여기에 A4 미리보기가 나옵니다.</p>
+      </div>
     </div>
-  </section>
-</main>
+  </main>
+</div>
+
+<!-- ══ 설정 ══ -->
+<div id="settings" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+  <div class="veil" data-close></div>
+  <div class="sheet">
+    <div class="sheet-head">
+      <h2 id="settingsTitle">설정</h2>
+      <span class="grow"></span>
+      <button id="btnSettingsClose" class="icon-btn" title="닫기" aria-label="닫기">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="sheet-tabs" role="tablist">
+      <button data-pane="ai" role="tab" aria-selected="true">AI 연결</button>
+      <button data-pane="json" role="tab" aria-selected="false">JSON 직접 넣기</button>
+      <button data-pane="print" role="tab" aria-selected="false">인쇄·도움말</button>
+    </div>
+    <div class="sheet-body">
+
+      <section class="pane" data-pane="ai">
+        <div class="field">
+          <label for="providerSel">AI 서비스</label>
+          <div class="row">
+            <select id="providerSel" class="input">
+              <option value="gemini">Google Gemini API</option>
+              <option value="openrouter">OpenRouter</option>
+            </select>
+          </div>
+          <div class="hint" id="keyHint"></div>
+        </div>
+        <div class="field">
+          <label for="apiKey">API 키</label>
+          <div class="row">
+            <input id="apiKey" class="input" type="password" placeholder="AIza…" autocomplete="off" spellcheck="false">
+            <button id="btnKeySave" class="btn primary">저장</button>
+            <button id="btnKeyClear" class="btn">지우기</button>
+          </div>
+          <div class="hint">키는 <b>이 브라우저에만</b> 저장되고 선택한 서비스로만 전송됩니다. 서버를 거치지 않습니다.</div>
+        </div>
+        <div class="field">
+          <label for="modelSel">모델</label>
+          <div class="row">
+            <select id="modelSel" class="input"><option value="">[목록 새로고침] 을 누르세요</option></select>
+            <button id="btnModelReload" class="btn">목록 새로고침</button>
+          </div>
+          <div class="row" style="margin-top:7px">
+            <input id="modelFilter" class="input" type="text" placeholder="모델 검색 (flash, free, claude…)" autocomplete="off">
+          </div>
+        </div>
+        <div class="notice">
+          활동지 요청에 <b>학생 실명·개인정보를 넣지 마세요.</b> 요청 내용은 선택한 회사 서버로 전송됩니다.
+          공용 PC 에서는 쓰고 나서 [지우기]를 누르세요.
+        </div>
+      </section>
+
+      <section class="pane" data-pane="json" hidden>
+        <div class="field">
+          <label for="src">활동지 JSON</label>
+          <textarea id="src" spellcheck="false" placeholder='Gem·ChatGPT·Claude 가 만든 활동지 JSON 을 붙여넣으세요.&#10;{ "docTitle": "…", "themeName": "sci", "pages": [ { "flow": [ … ] } ] }'></textarea>
+          <div class="hint">파일을 이 칸에 끌어다 놓아도 됩니다. AI 키가 없어도 이 경로로 활동지를 만들 수 있습니다.</div>
+        </div>
+        <div class="row">
+          <button id="btnRun" class="btn primary">검사 · 조판</button>
+          <label class="file"><span id="btnFile" class="btn">파일 열기</span><input id="fileIn" type="file" accept=".json,.txt,application/json"></label>
+          <button id="btnSample" class="btn">예시 넣기</button>
+          <button id="btnClear" class="btn">비우기</button>
+        </div>
+      </section>
+
+      <section class="pane" data-pane="print" hidden>
+        <div class="field">
+          <label>인쇄 설정</label>
+          <div class="hint">
+            <b>[인쇄 · PDF 저장]</b> 을 누르면 브라우저 인쇄창이 열립니다. 다음처럼 두면 A4 그대로 나옵니다.<br>
+            · 대상 <b>PDF로 저장</b> · 여백 <b>없음</b> · 배율 <b>100%</b> · <b>배경 그래픽 켜기</b><br>
+            학생용·교사용을 각각 한 번씩 인쇄하면 2벌이 됩니다.
+          </div>
+        </div>
+        <div class="field">
+          <label>이 앱이 보장하는 것</label>
+          <div class="hint">
+            · 학생용에는 정답이 남지 않습니다(정답이 새면 학생용 출력을 막습니다).<br>
+            · A4 쪽 넘침이 없습니다 — 실제 높이를 재서 쪽을 나눕니다.<br>
+            · 성취기준 코드·원문은 내장 대장에서 조회한 것만 씁니다.
+          </div>
+        </div>
+        <div class="notice">
+          최종 수업 배포 전에 <b>사실성·난이도·저작권·정답 표시</b>는 선생님이 확인해 주세요.
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
 
 <iframe id="measure" title="측정용" aria-hidden="true"></iframe>
 
