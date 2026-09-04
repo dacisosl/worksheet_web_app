@@ -53,8 +53,11 @@
   function code(s) {
     return esc(s).replace(/`([^`]+)`/g, '<code>$1</code>');
   }
-  function scrollThread() {
-    el.thread.scrollTop = el.thread.scrollHeight;
+  // 바닥 근처에 있을 때만 따라 내린다 — 진행 표시가 250ms 마다 갱신되는 동안 교사가 위로 올려
+  // 기록을 읽고 있으면 자동 스크롤이 그것을 계속 끌어내린다.
+  function scrollThread(force) {
+    var nearBottom = el.thread.scrollHeight - el.thread.scrollTop - el.thread.clientHeight < 90;
+    if (force || nearBottom) el.thread.scrollTop = el.thread.scrollHeight;
   }
   function hideWelcome() {
     if (el.welcome) el.welcome.hidden = true;
@@ -84,9 +87,97 @@
     return append(wrap);
   }
 
-  /** 생각 중 표시 — 반환된 노드를 remove() 하면 사라진다. */
-  function pushTyping() {
-    return pushAI('<span class="typing"><i></i><i></i><i></i></span>');
+  // ── 진행 표시(경과·예상 시간) ───────────────────────────────────────────
+  // 두 가지 모드로 쓴다.
+  //  · eta 모드(AI 요청): 같은 모델의 최근 실행 시간에서 얻은 예상치로 남은 시간을 보인다. 예상을
+  //    넘기면 **남은 시간을 계속 줄이는 거짓말을 하지 않고** "예상보다 오래 걸린다"로 바꾼다.
+  //  · phases 모드(조판): 단계가 정해져 있어 남은 시간이 아니라 몇 번째 단계인지를 보인다.
+  function pushProgress(opts) {
+    opts = opts || {};
+    hideWelcome();
+    var wrap = document.createElement('div');
+    wrap.className = 'prog';
+    wrap.innerHTML = '<div class="prog-head"><span class="prog-label"></span><span class="prog-time"></span></div>'
+      + '<div class="prog-track"><i class="prog-fill"></i></div>'
+      + '<div class="prog-hint"></div>';
+    var labelEl = wrap.querySelector('.prog-label');
+    var timeEl = wrap.querySelector('.prog-time');
+    var fillEl = wrap.querySelector('.prog-fill');
+    var hintEl = wrap.querySelector('.prog-hint');
+
+    var started = Date.now();
+    var etaMs = opts.etaMs || 0;
+    var phases = Array.isArray(opts.phases) ? opts.phases : null;
+    var phaseIdx = 0;
+    var timer = null;
+
+    labelEl.textContent = opts.label || (phases ? phases[0] : '기다리는 중…');
+    if (opts.hint) hintEl.textContent = opts.hint;
+    else hintEl.hidden = true;
+
+    function tick() {
+      var sec = Math.round((Date.now() - started) / 1000);
+      if (etaMs > 0) {
+        var etaSec = Math.round(etaMs / 1000);
+        var left = etaSec - sec;
+        if (left >= 1) {
+          timeEl.textContent = sec + '초 · 약 ' + left + '초 남음';
+          fillEl.style.width = Math.min(92, (sec / etaSec) * 100).toFixed(1) + '%';
+        } else {
+          wrap.dataset.over = '1';
+          timeEl.textContent = sec + '초 · 예상보다 오래 걸려요';
+          fillEl.style.width = '92%';
+        }
+      } else {
+        timeEl.textContent = sec + '초';
+        if (phases) fillEl.style.width = Math.min(92, ((phaseIdx + 1) / phases.length) * 100).toFixed(1) + '%';
+      }
+    }
+    append(wrap);
+    tick();
+    timer = setInterval(tick, 250);
+
+    return {
+      el: wrap,
+      elapsedMs: function () { return Date.now() - started; },
+      setLabel: function (text) { labelEl.textContent = text; },
+      setHint: function (text) { hintEl.hidden = !text; hintEl.textContent = text || ''; },
+      /** phases 모드 — i 번째 단계로 진행(레이블은 phases[i]). */
+      setPhase: function (i, label) {
+        phaseIdx = i;
+        if (phases && phases[i]) labelEl.textContent = label || phases[i];
+        else if (label) labelEl.textContent = label;
+        tick();
+      },
+      remove: function () { clearInterval(timer); wrap.remove(); },
+    };
+  }
+
+  // ── 실행 시간 기록(예상치의 근거) ───────────────────────────────────────
+  // 모델마다 걸리는 시간이 크게 다르고(같은 모델도 분량에 따라 다르다), 우리가 미리 알 방법은 없다.
+  // 그래서 **실제 걸린 시간을 이 브라우저에 쌓아** 다음 요청의 예상치로 쓴다. 기록이 없으면
+  // 어림값을 쓰되 "어림값"이라고 밝힌다(모르는 것을 아는 척하지 않는다).
+  var TIMING_KEY = 'wsg.timing.v1';
+  var TIMING_KEEP = 5;
+  var TIMING_SEED_MS = 30000;
+
+  function timingLoad() {
+    try { return JSON.parse(localStorage.getItem(TIMING_KEY) || '{}') || {}; } catch (e) { return {}; }
+  }
+  function timingRecord(key, ms) {
+    if (!key || !(ms > 0)) return;
+    var all = timingLoad();
+    var list = Array.isArray(all[key]) ? all[key] : [];
+    list.push(Math.round(ms));
+    all[key] = list.slice(-TIMING_KEEP);
+    try { localStorage.setItem(TIMING_KEY, JSON.stringify(all)); } catch (e) { /* 사생활 보호 모드 */ }
+  }
+  /** @returns {{ms:number, samples:number, seeded:boolean}} */
+  function timingEstimate(key) {
+    var list = (timingLoad()[key] || []).filter(function (n) { return n > 0; });
+    if (!list.length) return { ms: TIMING_SEED_MS, samples: 0, seeded: true };
+    var sorted = list.slice().sort(function (a, b) { return a - b; });
+    return { ms: sorted[Math.floor(sorted.length / 2)], samples: sorted.length, seeded: false };
   }
 
   // 진행 기록(정규화·검증·조판·검수)은 접히는 카드 하나에 모은다 — 대화 흐름을 어지럽히지 않으면서
@@ -237,6 +328,9 @@
   }
 
   // ── 파이프라인 ──────────────────────────────────────────────────────────
+  /** 조판 단계 이름 — 진행 막대가 몇 번째인지 보이는 데 쓴다(짧아서 남은 시간은 재지 않는다). */
+  var PIPELINE_PHASES = ['구조를 확인하고 있어요', '쪽 나눔을 재고 있어요', '학생용·교사용으로 나누는 중', '정답 누출을 검사하는 중'];
+
   /** @param {{silentUser?:boolean}} [opts] AI 경로는 이미 사용자 말풍선을 띄웠다. */
   function run(opts) {
     opts = opts || {};
@@ -287,6 +381,8 @@
 
     // 2) 실측 조판
     el.btnRun.disabled = true;
+    var prog = pushProgress({ phases: PIPELINE_PHASES, hint: '쪽 나눔은 실제 높이를 재서 정합니다.' });
+    prog.setPhase(0);
     var theme = resolveTheme(doc);
     var assets = { paperCss: WSG_ASSETS.paper, blocksCss: WSG_ASSETS.blocks, themeCss: WSG_THEMES[theme] || WSG_THEMES.ko };
     var meta = RenderMod.deriveRenderMeta(doc);
@@ -295,7 +391,9 @@
     setActivity('run', '쪽 나눔 측정 중…');
 
     var paginator = new PaginateMod.PaginateObjectTree({ measurer: browserMeasurer });
+    prog.setPhase(1);
     paginator.execute(doc, assets, meta).then(function (result) {
+      prog.setPhase(2);
       var paginated = result.document;
       state.pageCount = paginated.pages.length;
       var flow = paginated.pages.reduce(function (acc, p) { return acc.concat(p.flow || []); }, []);
@@ -307,6 +405,7 @@
 
       // 4) 검수 게이트 — 구조(1층) + 렌더 실측(2층: 정답 누출·인쇄 안전·저작권 슬롯).
       //    정답이 마크 안에 온전히 있는 교사 벌을 검사해야 "밖으로 샌 정답"을 비교할 수 있다.
+      prog.setPhase(3);
       var gate = new ReviewMod.ValidateWorksheet({ paper: meta.paper || null })
         .execute(paginated, variants.teacher);
       var blocking = [];
@@ -325,6 +424,9 @@
 
       state.docTitle = (doc.docTitle || '활동지').replace(/[\\/:*?"<>|]/g, '_');
 
+      var pipelineSec = Math.max(1, Math.round(prog.elapsedMs() / 1000));
+      prog.remove();
+
       if (blocking.length) {
         setActivity('err', '검수에서 막힘 — 교사용만 출력');
         setOutputs({ student: null, teacher: variants.teacher });
@@ -336,20 +438,29 @@
         return;
       }
 
-      setActivity('ok', '검사 · 조판 완료 (' + state.pageCount + '쪽)');
+      setActivity('ok', '검사 · 조판 완료 (' + state.pageCount + '쪽 · ' + pipelineSec + '초)');
       say('ok', '검수 통과 — 학생용 정답 제거 확인.');
       setOutputs(variants);
       preview();
+      // 걸린 시간을 결과에 남긴다 — 교사가 다음 요청에서 무엇을 기다릴지 알게 된다.
+      var aiMs = (typeof chat !== 'undefined' && chat.lastAiMs) || 0;
+      var timeTag = aiMs
+        ? 'AI ' + Math.round(aiMs / 1000) + '초 · 조판 ' + pipelineSec + '초'
+        : '조판 ' + pipelineSec + '초';
+      if (typeof chat !== 'undefined') chat.lastAiMs = 0;
       pushAI('<b>' + esc(doc.docTitle || '활동지') + '</b> 준비됐습니다. 오른쪽에서 확인하고 인쇄하세요.'
         + '<div class="meta"><span class="tag ok">A4 ' + state.pageCount + '쪽</span>'
         + '<span class="tag">문항 ' + state.questionCount + '개</span>'
-        + '<span class="tag">학생용 · 교사용 2벌</span></div>');
+        + '<span class="tag">학생용 · 교사용 2벌</span>'
+        + '<span class="tag">' + timeTag + '</span></div>');
       el.ask.placeholder = '예: 3번 문항 빼고 성찰 질문 추가해줘';
     }).catch(function (e) {
+      prog.remove();
       say('err', '조판 중 오류: ' + esc(e && e.message ? e.message : String(e)));
       setActivity('err', '조판 실패');
       pushAI('조판 중 문제가 생겼습니다. 위 기록을 펼쳐 확인해 주세요.');
     }).then(function () {
+      prog.remove();
       el.btnRun.disabled = false;
     });
   }

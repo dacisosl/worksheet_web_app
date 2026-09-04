@@ -119,12 +119,25 @@
   }
   .tag.ok { background: var(--ok-soft); color: var(--ok); }
 
-  /* 타이핑 표시 */
-  .typing { display: inline-flex; gap: 4px; align-items: center; height: 22px; }
-  .typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--ink-3); animation: bounce 1.2s infinite; }
-  .typing i:nth-child(2) { animation-delay: .15s; }
-  .typing i:nth-child(3) { animation-delay: .3s; }
-  @keyframes bounce { 0%, 60%, 100% { opacity: .28; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-3px); } }
+  /* 진행 표시 — 경과·예상 시간과 막대 */
+  .prog { margin: 0 0 14px 33px; }
+  .prog-head { display: flex; align-items: baseline; gap: 8px; font-size: 12.5px; margin-bottom: 6px; }
+  .prog-label { font-weight: 600; color: var(--ink); }
+  .prog-time { margin-left: auto; color: var(--ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .prog-track { height: 5px; border-radius: var(--r-full); background: var(--line-2); overflow: hidden; }
+  .prog-fill {
+    display: block; height: 100%; width: 0; border-radius: var(--r-full);
+    background: linear-gradient(90deg, #4b82ff, var(--accent));
+    transition: width .35s cubic-bezier(.4, 0, .2, 1);
+  }
+  /* 예상 시간을 넘겼을 때 — 막대를 흐르게 해 "멈춘 게 아님"을 보인다. */
+  .prog[data-over="1"] .prog-fill {
+    background: linear-gradient(90deg, var(--accent) 0%, #9dbcff 50%, var(--accent) 100%);
+    background-size: 200% 100%; animation: flow 1.4s linear infinite;
+  }
+  .prog[data-over="1"] .prog-time { color: var(--warn); }
+  @keyframes flow { to { background-position: -200% 0; } }
+  .prog-hint { margin-top: 5px; font-size: 11.5px; color: var(--ink-3); }
 
   /* 진행 카드(정규화·검증·조판 기록) */
   .card {

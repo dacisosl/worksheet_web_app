@@ -14,7 +14,7 @@
 // 키는 이 브라우저 localStorage 에만 저장하고, 서버를 거치지 않고 각 API 로 직접 보낸다.
 
 var LS_PROVIDER = 'wsg.ai.provider';
-var chat = { history: [], busy: false, subjectHint: 'general' }; // history: [{role:'user'|'model', text}]
+var chat = { history: [], busy: false, subjectHint: 'general', lastAiMs: 0 }; // history: [{role:'user'|'model', text}]
 
 function lsGet(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
 function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* 사생활 보호 모드 */ } }
@@ -482,9 +482,23 @@ function ask() {
   var history = chat.history.concat([{ role: 'user', text: userText }]);
   chat.busy = true;
   el.btnAsk.disabled = true;
-  var typing = pushTyping();
+
+  // 예상 시간은 **이 모델의 최근 실행 시간**에서 온다. 처음 쓰는 모델은 근거가 없으니 어림값이라고
+  // 밝히고, 끝나면 실제 시간을 기록해 다음 요청부터 정확해진다.
+  var timingKey = providerId() + ':' + model;
+  var est = timingEstimate(timingKey);
+  var basis = est.seeded
+    ? '이 모델은 처음이라 예상 시간은 어림값입니다'
+    : '최근 ' + est.samples + '회 기준 (모델 · 분량에 따라 달라집니다)';
+  var prog = pushProgress({
+    label: isFollowUp ? '활동지를 고치고 있어요' : '활동지 초안을 쓰고 있어요',
+    etaMs: est.ms,
+    hint: esc(model) + ' · ' + basis,
+  });
 
   provider().generate(key, model, systemInstruction(chat.subjectHint), history, true).then(function (out) {
+    chat.lastAiMs = prog.elapsedMs();
+    timingRecord(timingKey, chat.lastAiMs);
     if (!out.text || !out.text.trim()) {
       throw new Error(out.truncated
         ? '응답이 길이 제한에 걸려 끊겼습니다 — "문항을 5개로 줄여줘"처럼 좁혀 요청하세요.'
@@ -496,12 +510,13 @@ function ask() {
     var json = stripFence(out.text);
     el.src.value = json;
     chat.history = trimHistory(history.concat([{ role: 'model', text: json }]));
-    say('ok', '초안을 받았습니다(' + Math.round(json.length / 1024) + 'KB).');
-    typing.remove();
+    say('ok', '초안을 받았습니다(' + Math.round(json.length / 1024) + 'KB · '
+      + Math.round(chat.lastAiMs / 1000) + '초).');
+    prog.remove();
     run({ silentUser: true });
   }).catch(function (e) {
     var msg = e && e.message ? e.message : String(e);
-    typing.remove();
+    prog.remove();
     say('err', esc(msg));
     if (/Failed to fetch|NetworkError|network/i.test(msg)) {
       say('muted', '인터넷 연결이나 학교 방화벽을 확인하세요. 오프라인에서는 설정의 JSON 직접 넣기를 쓰세요.');
@@ -509,6 +524,7 @@ function ask() {
     setActivity('err', '요청 실패');
     pushAI('요청이 실패했습니다: ' + esc(msg));
   }).then(function () {
+    prog.remove();
     chat.busy = false;
     autoGrow();
   });
