@@ -63,6 +63,7 @@ npm run build:gem
 | `src/**` | 렌더·검증·조판 규칙(웹앱과 CLI가 공유) |
 | `tools/renderer-shell.html`, `tools/renderer-app.js` | 웹앱 UI·파이프라인 배선 |
 | `tools/renderer-ai.js` | AI 패널(공급자·성취기준 검색·프롬프트 조립) |
+| `src/usecases/ExportDocx.js`, `zipWriter.js` | 편집용 DOCX 내보내기(OOXML 직접 작성, 의존성 0) |
 | `tools/ai-system-prompt.md` | AI 시스템 프롬프트 |
 | `gem/knowledge/worksheet-json-spec.md` | 활동지 JSON 저작 규격(정본 — 두 경로가 공유) |
 | `gem/GEM_INSTRUCTIONS.md` | 챗봇(Gem/GPTs) 지시문 |

@@ -72,8 +72,9 @@ export class BuildVariants {
 
 /** student 용 개체 트리 복제 — 각 페이지의 flow/float 에서 answer:true 개체를 물리 제거하고
  *  남은 question.answerKey 도 제거한다(도메인 불변식, S2.2). 원본 document 는 변경하지 않는다
- *  (teacher 경로는 원본을 그대로 재사용). */
-function stripAnswersFromDocument(document) {
+ *  (teacher 경로는 원본을 그대로 재사용). export 하는 이유: HTML 이 아닌 다른 형식(DOCX 등)으로
+ *  학생 벌을 낼 때도 **같은 함수**로 정답을 지워야 한다 — 형식마다 제거 규칙을 다시 쓰면 갈라진다. */
+export function stripAnswersFromDocument(document) {
   const pages = Array.isArray(document.pages) ? document.pages : [];
   return {
     ...document,

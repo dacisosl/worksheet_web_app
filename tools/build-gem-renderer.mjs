@@ -30,6 +30,7 @@ const ENTRIES = [
   'src/usecases/PaginateObjectTree.js',
   'src/usecases/NormalizeAuthoredDoc.js',
   'src/usecases/ValidateWorksheet.js',
+  'src/usecases/ExportDocx.js',
   'src/domain/schema/exportGate.js',
 ];
 

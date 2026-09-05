@@ -21,6 +21,7 @@
   var NormalizeMod = __wsgReq('src/usecases/NormalizeAuthoredDoc.js');
   var ReviewMod = __wsgReq('src/usecases/ValidateWorksheet.js');
   var ScanMod = __wsgReq('src/usecases/html-scan.js');
+  var DocxMod = __wsgReq('src/usecases/ExportDocx.js');
 
   var $ = function (id) { return document.getElementById(id); };
   var el = {
@@ -29,6 +30,7 @@
     // 뷰어
     frame: $('frame'), measure: $('measure'), empty: $('empty'), pageInfo: $('pageInfo'),
     tabStudent: $('tabStudent'), tabTeacher: $('tabTeacher'), btnPrint: $('btnPrint'), btnSaveHtml: $('btnSaveHtml'),
+    btnSaveDocx: $('btnSaveDocx'),
     // 설정
     settings: $('settings'), btnSettings: $('btnSettings'), btnSettingsInline: $('btnSettingsInline'),
     btnSettingsClose: $('btnSettingsClose'),
@@ -39,7 +41,12 @@
     btnSample: $('btnSample'), btnClear: $('btnClear'),
   };
 
-  var state = { variants: null, mode: 'student', docTitle: '활동지', pageCount: 0, questionCount: 0 };
+  var state = {
+    variants: null, mode: 'student', docTitle: '활동지', pageCount: 0, questionCount: 0,
+    // DOCX 내보내기용 — 조판이 끝난 개체 트리와 테마 CSS(교과색). 학생 벌 트리는 내보낼 때
+    // BuildVariants 의 같은 함수로 정답을 지운다(형식마다 제거 규칙을 갖지 않는다).
+    paginatedDoc: null, themeCss: '',
+  };
 
   // ── 대화 표현 ───────────────────────────────────────────────────────────
   var AI_AVATAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"'
@@ -395,6 +402,8 @@
     paginator.execute(doc, assets, meta).then(function (result) {
       prog.setPhase(2);
       var paginated = result.document;
+      state.paginatedDoc = paginated;
+      state.themeCss = assets.themeCss;
       state.pageCount = paginated.pages.length;
       var flow = paginated.pages.reduce(function (acc, p) { return acc.concat(p.flow || []); }, []);
       state.questionCount = flow.filter(function (o) { return o.type === 'question'; }).length;
@@ -479,8 +488,10 @@
   function setOutputs(variants) {
     state.variants = variants;
     var has = !!(variants && (variants.student || variants.teacher));
+    if (!has) state.paginatedDoc = null;
     el.btnPrint.disabled = !has;
     el.btnSaveHtml.disabled = !has;
+    el.btnSaveDocx.disabled = !has;
     el.pageInfo.hidden = !has;
     el.tabStudent.disabled = !!(variants && !variants.student);
     if (has) el.pageInfo.textContent = 'A4 ' + state.pageCount + '쪽';
@@ -543,17 +554,39 @@
     setTimeout(function () { win.print(); }, 120);
   }
 
-  function saveHtml() {
-    var html = currentHtml();
-    if (!html) return;
-    var name = state.docTitle + '_' + (state.mode === 'teacher' ? '교사용' : '학생용') + '.html';
-    var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  function downloadBlob(blob, name) {
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = name;
     document.body.appendChild(a);
     a.click();
     setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  }
+
+  function saveHtml() {
+    var html = currentHtml();
+    if (!html) return;
+    var name = state.docTitle + '_' + (state.mode === 'teacher' ? '교사용' : '학생용') + '.html';
+    downloadBlob(new Blob([html], { type: 'text/html;charset=utf-8' }), name);
+  }
+
+  /** 편집용 DOCX — 현재 탭(학생용/교사용) 기준. 학생 벌은 BuildVariants 와 같은 함수로 정답을 지운다. */
+  function saveDocx() {
+    if (!state.paginatedDoc || !currentHtml()) return;
+    var teacher = state.mode === 'teacher';
+    var tree = teacher ? state.paginatedDoc : VariantsMod.stripAnswersFromDocument(state.paginatedDoc);
+    var result;
+    try {
+      result = new DocxMod.ExportDocx().execute(tree, { mode: teacher ? 'teacher' : 'student', themeCss: state.themeCss });
+    } catch (e) {
+      pushAI('DOCX 를 만들지 못했습니다: ' + esc(e && e.message ? e.message : String(e)));
+      return;
+    }
+    var name = state.docTitle + '_' + (teacher ? '교사용' : '학생용') + '.docx';
+    downloadBlob(new Blob([result.bytes], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }), name);
+    var notes = result.notes.length ? '<br>' + result.notes.map(function (n) { return '· ' + esc(n); }).join('<br>') : '';
+    pushAI('<b>' + esc(name) + '</b> 를 내려받았습니다. 한글·워드에서 열어 고치세요 — 편집용이라 쪽 나눔은 프로그램이 다시 잡고, '
+      + '상자는 표로, 답란은 밑줄로 바뀝니다. 인쇄물은 [인쇄 · PDF 저장]이 정확합니다.' + notes);
   }
 
   // ── 설정 모달 ───────────────────────────────────────────────────────────
@@ -591,6 +624,7 @@
   });
   el.btnPrint.addEventListener('click', printCurrent);
   el.btnSaveHtml.addEventListener('click', saveHtml);
+  el.btnSaveDocx.addEventListener('click', saveDocx);
   el.tabStudent.addEventListener('click', function () { state.mode = 'student'; syncTabs(); preview(); });
   el.tabTeacher.addEventListener('click', function () { state.mode = 'teacher'; syncTabs(); preview(); });
 
