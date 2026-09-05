@@ -30,7 +30,10 @@ const SYMBOLS = {
   pm: '±', mp: '∓', times: '×', cdot: '·', div: '÷', le: '≤', leq: '≤', ge: '≥', geq: '≥', ne: '≠', neq: '≠',
   lt: '<', gt: '>', iff: '⟺', Leftrightarrow: '⟺', Rightarrow: '⇒', rightarrow: '→', to: '→', leftarrow: '←',
   infty: '∞', pi: 'π', alpha: 'α', beta: 'β', gamma: 'γ', theta: 'θ', lambda: 'λ', mu: 'μ', sigma: 'σ', omega: 'ω',
-  Delta: 'Δ', angle: '∠', triangle: '△', circ: '°', degree: '°', ldots: '…', cdots: '⋯', dots: '…', approx: '≈',
+  Delta: 'Δ', Gamma: 'Γ', Theta: 'Θ', Lambda: 'Λ', Pi: 'Π', Sigma: 'Σ', Phi: 'Φ', Psi: 'Ψ', Omega: 'Ω', Xi: 'Ξ',
+  delta: 'δ', epsilon: 'ε', varepsilon: 'ε', zeta: 'ζ', eta: 'η', kappa: 'κ', nu: 'ν', xi: 'ξ', rho: 'ρ', tau: 'τ',
+  upsilon: 'υ', phi: 'φ', varphi: 'φ', chi: 'χ', psi: 'ψ', ohm: 'Ω', celsius: '℃',
+  angle: '∠', triangle: '△', circ: '°', degree: '°', ldots: '…', cdots: '⋯', dots: '…', approx: '≈',
   equiv: '≡', in: '∈', notin: '∉', subset: '⊂', cup: '∪', cap: '∩', emptyset: '∅', varnothing: '∅', perp: '⊥',
   parallel: '∥', propto: '∝', therefore: '∴', because: '∵', prime: '′', overline: '‾', bar: '‾',
   sum: 'Σ', prod: 'Π', int: '∫', partial: '∂', nabla: '∇', forall: '∀', exists: '∃', neg: '¬', land: '∧', lor: '∨',
@@ -87,7 +90,9 @@ export function latexToRuns(src, stats = { unknown: 0 }, base = {}) {
         runs.push(...latexToRuns(g, stats, base));
         push(')');
       } else if (name === 'text' || name === 'mathrm' || name === 'mathbf' || name === 'operatorname' || name === 'textbf') {
-        push(readGroup(), name === 'mathbf' || name === 'textbf' ? { b: true } : {});
+        // 안쪽도 다시 변환한다 — `\text{(단위: [\Omega])}` 처럼 글 안에 기호 명령이 섞여 오는 일이 흔하다(실측).
+        const g = readGroup();
+        runs.push(...latexToRuns(g, stats, name === 'mathbf' || name === 'textbf' ? { ...base, b: true } : base));
       } else if (name === 'overline' || name === 'bar' || name === 'vec' || name === 'hat') {
         const g = readGroup(); runs.push(...latexToRuns(g, stats, base)); push(name === 'vec' ? '⃗' : '‾');
       } else if (Object.prototype.hasOwnProperty.call(SYMBOLS, name)) {
@@ -193,7 +198,7 @@ export function blockHtmlToParagraphs(html, stats) {
 export function P(runs, opts = {}) {
   return { kind: 'p', runs: runs || [], ...opts };
 }
-/** 표. rows: Cell[][], widths(pt). borders=false 면 선 없음. */
+/** 표. rows: Cell[][], widths(pt). borders: true(전부) | false(없음) | 'lines'(칸 아래 가로선만 — 답란). */
 export function T(rows, opts = {}) {
   const { widths = null, borders = true, borderColor = 'CBD5C0', cellMargin = 5, indent = 0 } = opts;
   return { kind: 'table', rows, widths, borders, borderColor, cellMargin, indent };
@@ -364,18 +369,23 @@ function renderCallout(obj, ctx) {
   return boxTable(ctx, body, { header: { blocks: [P(label)], shade: ctx.theme.clite }, border: ctx.theme.c2 });
 }
 
-/** 답란 — 밑줄 문단 n 개(줄 간격 1.5). */
-function answerLines(n) {
-  const out = [];
-  for (let i = 0; i < n; i++) out.push(P([{ text: ' ' }], { border: { color: 'BBBBBB', widthPt: 0.5 }, line: 1.5, after: 3 }));
-  return out;
+/** 답란 — 가로선만 있는 1열 표(줄 하나 = 칸 하나, 9mm). 한글·워드 학습지의 관용 답란이라 칸에 바로 써넣을 수
+ *  있고, 줄을 늘리거나 줄이는 것도 표 행 추가·삭제로 자연스럽다(문단 테두리 밑줄은 글을 치면 선이 밀려 어색했다). */
+export const ANSWER_LINE_MM = 9;
+function answerLines(n, ctx) {
+  const rows = [];
+  for (let i = 0; i < n; i++) rows.push([{ blocks: [P([])], width: ctx.contentWidth, minHeight: ptFromMm(ANSWER_LINE_MM) }]);
+  return [T(rows, { widths: [ctx.contentWidth], borders: 'lines', borderColor: 'BBBBBB', cellMargin: 2 })];
 }
 
 function renderQuestion(obj, ctx) {
   const stats = ctx.stats;
   const qnum = obj.qnum != null ? [{ text: `${CIRCLED[Number(obj.qnum) - 1] || obj.qnum} `, b: true, color: ctx.theme.c, size: 11 }] : [];
-  const prompt = typeof obj.promptHtml === 'string' && obj.promptHtml ? inlineHtmlToRuns(obj.promptHtml, stats, { b: true }) : [{ text: String(obj.prompt ?? ''), b: true }];
-  const blocks = [P([...qnum, ...prompt], { after: 4 })];
+  // 평문 필드(prompt·answerKey.text)도 인라인 처리기를 거친다 — `$…$` 수식이 평문에도 흔히 들어온다(실측).
+  const prompt = inlineHtmlToRuns(typeof obj.promptHtml === 'string' && obj.promptHtml ? obj.promptHtml : String(obj.prompt ?? ''), stats, { b: true });
+  // 문항은 상자(표)로 감싸지 않는다 — 한글·워드에서 문항을 지우고 붙이고 번호를 고치는 일이 표 안에서는
+  // 번거롭다(실측 피드백). 인쇄판의 상자는 PDF 쪽 일이고, 편집용은 "번호 문단 + 선택지 + 답란 표"가 자연스럽다.
+  const blocks = [P([...qnum, ...prompt], { before: 4, after: 4, keepNext: true })];
 
   switch (obj.qtype) {
     case 'multiple-choice': {
@@ -414,21 +424,22 @@ function renderQuestion(obj, ctx) {
       break;
     }
     case 'short-answer':
-      blocks.push(...answerLines(1));
+      blocks.push(...answerLines(1, ctx));
       break;
     case 'essay':
     default: {
       if (obj.lines === 0) break;
-      blocks.push(...answerLines(Math.max(1, Number(obj.lines) || 4)));
+      blocks.push(...answerLines(Math.max(1, Number(obj.lines) || 4), ctx));
     }
   }
 
   if (ctx.mode === 'teacher' && obj.answerKey) {
     const ak = obj.answerKey;
-    const runs = typeof ak.html === 'string' ? inlineHtmlToRuns(ak.html, stats) : [{ text: String(ak.text ?? '') }];
+    const runs = inlineHtmlToRuns(typeof ak.html === 'string' ? ak.html : String(ak.text ?? ''), stats);
     blocks.push(P([{ text: '정답  ', b: true, color: ctx.theme.cink, size: 9.5 }, ...runs.map((r) => ({ ...r, color: r.color || ctx.theme.cink, size: 9.5 }))], { shade: ctx.theme.clite, before: 4, after: 2 }));
   }
-  return boxTable(ctx, blocks, { border: 'CBD5C0' });
+  blocks.push(P([], { after: 6 })); // 문항 사이 숨 고르기
+  return blocks;
 }
 
 function renderTable(obj, ctx) {
@@ -458,7 +469,7 @@ function renderAnswerArea(obj, ctx) {
   const out = [];
   if (obj.label) out.push(P([{ text: String(obj.label), b: true, size: 9.5 }], { after: 2 }));
   if (obj.style === 'box') out.push(...boxTable(ctx, [P([], { before: 30, after: 30 })], { border: 'BBBBBB' }));
-  else out.push(...answerLines(Math.max(1, Number(obj.lines) || 3)));
+  else out.push(...answerLines(Math.max(1, Number(obj.lines) || 3), ctx));
   return out;
 }
 

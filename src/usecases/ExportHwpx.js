@@ -19,7 +19,8 @@ const HWPUNIT_PER_PT = 100;                    // 1pt = 100 HWPUNIT(1/7200 inch)
 const hu = (pt) => Math.round(pt * HWPUNIT_PER_PT);
 const FONT = '함초롬돋움';
 const DEFAULT_SIZE_PT = 10.5;
-const DEFAULT_LINE_PERCENT = 130;
+const DEFAULT_LINE_PERCENT = 160;               // 한글 바탕글 기본과 같게 — 교사가 익숙한 줄간격
+const CELL_MARGIN_V = 1.41;                      // 한글 기본 셀 안 여백(위·아래 0.5mm = 141 HWPUNIT)
 const BORDER_WIDTH = '0.12 mm';
 
 const NS = 'xmlns:ha="http://www.hancom.co.kr/hwpml/2011/app" xmlns:hp="http://www.hancom.co.kr/hwpml/2011/paragraph" '
@@ -78,7 +79,8 @@ function charPrXml(id, r) {
 }
 
 function paraPrXml(id, p) {
-  const align = { left: 'LEFT', center: 'CENTER', right: 'RIGHT', both: 'JUSTIFY' }[p.align] || 'LEFT';
+  // 기본은 양쪽 정렬 — 한글 바탕글의 기본이라 교사가 문단을 이어 써도 모양이 튀지 않는다.
+  const align = { left: 'LEFT', center: 'CENTER', right: 'RIGHT', both: 'JUSTIFY' }[p.align] || 'JUSTIFY';
   const margin = `<hh:margin><hc:intent value="0" unit="HWPUNIT"/><hc:left value="${hu(p.indent || 0)}" unit="HWPUNIT"/><hc:right value="0" unit="HWPUNIT"/>`
     + `<hc:prev value="${hu(p.before || 0)}" unit="HWPUNIT"/><hc:next value="${hu(p.after || 0)}" unit="HWPUNIT"/></hh:margin>`
     + `<hh:lineSpacing type="PERCENT" value="${p.line ? Math.round(p.line * 100) : DEFAULT_LINE_PERCENT}" unit="HWPUNIT"/>`;
@@ -147,15 +149,17 @@ class Writer {
     }).join('');
   }
 
-  /** 표 → 표를 담은 문단 하나. 셀 테두리·채움은 borderFill 로 등록한다. */
-  table(t) {
+  /** 표 → 표를 담은 문단 하나. 셀 테두리·채움은 borderFill 로 등록한다. after: 표 문단 아래 간격(pt). */
+  table(t, after = 0) {
     const rows = t.rows || [];
     const colCount = Math.max(...rows.map((r) => r.reduce((n, c) => n + (c.span || 1), 0)), 1);
     const widths = t.widths || rows[0].map((c) => c.width || 0);
     const totalW = hu(widths.reduce((a, b) => a + b, 0));
-    const margin = hu(t.cellMargin != null ? t.cellMargin : 5);
-    const on = !!t.borders;
-    const cellFill = (shade) => this.borderFill({ l: on, r: on, t: on, b: on, color: t.borderColor || 'CBD5C0', fill: shade || null });
+    const mh = hu(t.cellMargin != null ? t.cellMargin : 5);
+    const mv = hu(CELL_MARGIN_V);
+    // borders: true=사방, false=없음, 'lines'=칸 아래 가로선만(답란)
+    const side = t.borders === 'lines' ? { l: false, r: false, t: false, b: true } : { l: !!t.borders, r: !!t.borders, t: !!t.borders, b: !!t.borders };
+    const cellFill = (shade) => this.borderFill({ ...side, color: t.borderColor || 'CBD5C0', fill: shade || null });
     const tableBorder = cellFill(null);
 
     const rowHeights = rows.map((cells) => hu(Math.max(13, ...cells.map((c) => c.minHeight || 0))));
@@ -164,13 +168,13 @@ class Writer {
       const tcs = cells.map((c) => {
         const span = c.span || 1;
         const width = hu(c.width || widths.slice(col, col + span).reduce((a, b) => a + b, 0));
-        const inner = (c.blocks || []).map((b) => this.block(b)).join('') || this.paragraph({ runs: [] });
+        const inner = this.blocks(c.blocks || []) || this.paragraph({ runs: [] });
         const tc = `<hp:tc name="" header="0" hasMargin="0" protect="0" editable="0" dirty="0" borderFillIDRef="${cellFill(c.shade)}">`
           + `<hp:subList id="" textDirection="HORIZONTAL" lineWrap="BREAK" vertAlign="${c.vAlign === 'center' ? 'CENTER' : 'TOP'}" linkListIDRef="0" linkListNextIDRef="0" textWidth="0" textHeight="0" hasTextRef="0" hasNumRef="0">`
           + inner + '</hp:subList>'
           + `<hp:cellAddr colAddr="${col}" rowAddr="${ri}"/><hp:cellSpan colSpan="${span}" rowSpan="1"/>`
           + `<hp:cellSz width="${width}" height="${rowHeights[ri]}"/>`
-          + `<hp:cellMargin left="${margin}" right="${margin}" top="${margin}" bottom="${margin}"/></hp:tc>`;
+          + `<hp:cellMargin left="${mh}" right="${mh}" top="${mv}" bottom="${mv}"/></hp:tc>`;
         col += span;
         return tc;
       }).join('');
@@ -180,13 +184,30 @@ class Writer {
     const tbl = `<hp:tbl id="${this.uid()}" zOrder="${this.zOrder++}" numberingType="TABLE" textWrap="TOP_AND_BOTTOM" textFlow="BOTH_SIDES" lock="0" dropcapstyle="None" pageBreak="CELL" repeatHeader="0" rowCnt="${rows.length}" colCnt="${colCount}" cellSpacing="0" borderFillIDRef="${tableBorder}" noAdjust="0">`
       + `<hp:sz width="${totalW}" widthRelTo="ABSOLUTE" height="${rowHeights.reduce((a, b) => a + b, 0)}" heightRelTo="ABSOLUTE" protect="0"/>`
       + '<hp:pos treatAsChar="1" affectLSpacing="0" flowWithText="1" allowOverlap="0" holdAnchorAndSO="0" vertRelTo="PARA" horzRelTo="COLUMN" vertAlign="TOP" horzAlign="LEFT" vertOffset="0" horzOffset="0"/>'
-      + `<hp:outMargin left="0" right="0" top="0" bottom="0"/><hp:inMargin left="${margin}" right="${margin}" top="${margin}" bottom="${margin}"/>`
+      + `<hp:outMargin left="0" right="0" top="0" bottom="0"/><hp:inMargin left="${mh}" right="${mh}" top="${mv}" bottom="${mv}"/>`
       + trs + '</hp:tbl>';
-    const paraPrId = this.paraPr({ indent: t.indent || 0 });
+    const paraPrId = this.paraPr({ indent: t.indent || 0, after });
     return `<hp:p id="${this.uid()}" paraPrIDRef="${paraPrId}" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0"><hp:run charPrIDRef="0">${tbl}</hp:run></hp:p>`;
   }
 
-  block(b) { return b.kind === 'table' ? this.table(b) : this.paragraph(b); }
+  /** 블록 목록. 표 뒤의 "간격용 빈 문단"은 표 문단의 아래 간격으로 접는다 — 한글에서 표는 이미 자기 문단을
+   *  갖고 있어 빈 문단이 따로 남으면 표 사이마다 커서가 서는 빈 줄이 생겨 편집이 어색하다(워드는 표가 붙어
+   *  버리므로 빈 문단이 필요하지만, 여기서는 아니다). */
+  blocks(list) {
+    let out = '';
+    for (let i = 0; i < list.length; i++) {
+      const b = list[i];
+      if (b.kind !== 'table') { out += this.paragraph(b); continue; }
+      const nx = list[i + 1];
+      let after = 0;
+      if (nx && nx.kind === 'p' && !(nx.runs || []).length && !nx.border && !nx.shade && !nx.pageBreakBefore) {
+        after = (nx.before || 0) + (nx.after || 0);
+        i++;
+      }
+      out += this.table(b, after);
+    }
+    return out;
+  }
 }
 
 function secPrXml(page) {
@@ -220,8 +241,8 @@ export class ExportHwpx {
     // 첫 문단이 구역 설정(용지·여백)을 지닌다 — 모델의 첫 블록은 항상 모드 표식 문단이다.
     const [first, ...rest] = model.blocks;
     const lead = `<hp:run charPrIDRef="0">${secPrXml(model.page)}</hp:run>`;
-    const body = (first.kind === 'p' ? w.paragraph(first, lead) : w.paragraph({ runs: [] }, lead) + w.block(first))
-      + rest.map((b) => w.block(b)).join('');
+    const body = (first.kind === 'p' ? w.paragraph(first, lead) : w.paragraph({ runs: [] }, lead) + w.blocks([first]))
+      + w.blocks(rest);
 
     const sectionXml = XML_DECL + `<hs:sec ${NS}>${body}</hs:sec>`;
     const headerXml = XML_DECL + headXml(w);

@@ -112,6 +112,61 @@ function normalizeMathInHtml(obj, ctx) {
     if (fixed !== v) obj[field] = fixed;
   }
   if (touched) ctx.notes.push(`\`${obj.id}\` 의 수식 안 \`<\`/\`>\` 를 \`\\lt\`/\`\\gt\` 로 바꿨습니다(HTML 태그로 읽히는 것을 막기 위해).`);
+  normalizeMathText(obj, ctx);
+}
+
+// 수식 표기의 흔한 이탈 두 가지를 개체의 모든 글 필드(선택지·표 셀·정답 포함)에서 고친다.
+//  1) `$$…$$` 표시 수식 → `$…$`. 렌더러의 KaTeX 는 인라인 `$…$` 만 등록되어 있어 `$$` 는 인쇄에도 원문이
+//     그대로 나오고, 편집용 문서 변환기도 잡지 못했다(실측: "$I = V/R … [\Omega]$" 가 그대로 남음).
+//  2) 수식 밖의 낱 기호 명령(`\Omega`, `\mu`, `\times` …) → 유니코드 글자. 모델이 "5 \Omega" 처럼 `$` 없이
+//     쓰는 일이 흔한데, `$` 가 없으면 어디서도 변환되지 않아 인쇄물에 백슬래시가 찍힌다.
+const BARE_SYMBOLS = {
+  Omega: 'Ω', ohm: 'Ω', mu: 'μ', pi: 'π', theta: 'θ', alpha: 'α', beta: 'β', gamma: 'γ', lambda: 'λ', sigma: 'σ',
+  omega: 'ω', Delta: 'Δ', rho: 'ρ', tau: 'τ', phi: 'φ', epsilon: 'ε', times: '×', div: '÷', pm: '±', cdot: '·',
+  le: '≤', leq: '≤', ge: '≥', geq: '≥', ne: '≠', neq: '≠', degree: '°', circ: '°', infty: '∞', rightarrow: '→', to: '→',
+  approx: '≈', propto: '∝', angle: '∠', perp: '⊥', parallel: '∥', therefore: '∴', because: '∵', celsius: '℃',
+};
+const BARE_SYMBOL_RE = new RegExp('\\\\(' + Object.keys(BARE_SYMBOLS).join('|') + ')(?![A-Za-z])', 'g');
+/** 값이 아니라 표식인 문자열 필드 — 여기의 `$`·백슬래시는 건드리지 않는다. */
+const NON_TEXT_KEYS = new Set(['id', 'type', 'placement', 'qtype', 'variant', 'kind', 'style', 'align', 'themeName',
+  'dataSubject', 'heading', 'slotLabel', 'codes', 'children', 'rect']);
+
+function fixMathText(s, hits) {
+  let out = s;
+  if (out.indexOf('$$') !== -1) {
+    const fixed = out.replace(/\$\$([^$]{1,400}?)\$\$/g, (m, inner) => '$' + inner.trim() + '$');
+    if (fixed !== out) { hits.display++; out = fixed; }
+  }
+  if (out.indexOf('\\') !== -1) {
+    // `$…$` 안은 그대로 두고(변환기가 처리한다) 밖만 바꾼다.
+    const parts = out.split(/(\$[^$\n]{1,400}?\$)/);
+    const fixed = parts.map((p, i) => (i % 2 === 1 ? p : p.replace(BARE_SYMBOL_RE, (m, name) => { hits.bare++; return BARE_SYMBOLS[name]; }))).join('');
+    out = fixed;
+  }
+  return out;
+}
+function walkStrings(node, hits, depth = 0) {
+  if (depth > 6 || node == null) return;
+  if (Array.isArray(node)) {
+    node.forEach((v, i) => {
+      if (typeof v === 'string') node[i] = fixMathText(v, hits);
+      else walkStrings(v, hits, depth + 1);
+    });
+    return;
+  }
+  if (typeof node !== 'object') return;
+  for (const key of Object.keys(node)) {
+    if (NON_TEXT_KEYS.has(key)) continue;
+    const v = node[key];
+    if (typeof v === 'string') node[key] = fixMathText(v, hits);
+    else if (v && typeof v === 'object') walkStrings(v, hits, depth + 1);
+  }
+}
+function normalizeMathText(obj, ctx) {
+  const hits = { display: 0, bare: 0 };
+  walkStrings(obj, hits);
+  if (hits.display) ctx.notes.push(`\`${obj.id}\` 의 표시 수식 \`$$…$$\` ${hits.display}곳을 인라인 \`$…$\` 로 바꿨습니다(렌더러는 인라인만 지원).`);
+  if (hits.bare) ctx.notes.push(`\`${obj.id}\` 의 수식 밖 기호 명령 ${hits.bare}개(\`\\Omega\` 등)를 유니코드 기호로 바꿨습니다.`);
 }
 
 /** columns 자식도 같은 정규화를 받는다(id·answerKey 모양·표 셀…). 챗봇이 `children:[q1,q2]` 처럼

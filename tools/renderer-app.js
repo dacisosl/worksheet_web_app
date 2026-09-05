@@ -611,7 +611,7 @@
     downloadBlob(new Blob([result.bytes], { type: fmt.mime }), name);
     var notes = result.notes.length ? '<br>' + result.notes.map(function (n) { return '· ' + esc(n); }).join('<br>') : '';
     pushAI('<b>' + esc(name) + '</b> 를 내려받았습니다. ' + fmt.app + '에서 열어 고치세요 — 편집용이라 쪽 나눔은 프로그램이 다시 잡고, '
-      + '상자는 표로, 답란은 밑줄로 바뀝니다. 인쇄물은 [인쇄 · PDF 저장]이 정확합니다.' + notes);
+      + '개념 상자는 표로, 문항은 번호 문단으로, 답란은 가로선 표로 들어갑니다. 인쇄물은 [인쇄 · PDF 저장]이 정확합니다.' + notes);
   }
 
   // ── 보관함(IndexedDB) ───────────────────────────────────────────────────

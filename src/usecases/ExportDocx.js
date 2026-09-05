@@ -69,9 +69,12 @@ function pXml(p) {
 // ── 표 ──────────────────────────────────────────────────────────────────────
 function tblXml(t) {
   const { widths = null, borders = true, borderColor = 'CBD5C0', cellMargin = 5, indent = 0 } = t;
-  const bdr = borders
-    ? ['top', 'left', 'bottom', 'right', 'insideH', 'insideV'].map((s) => `<w:${s} w:val="single" w:sz="6" w:space="0" w:color="${hex6(borderColor)}"/>`).join('')
-    : ['top', 'left', 'bottom', 'right', 'insideH', 'insideV'].map((s) => `<w:${s} w:val="nil"/>`).join('');
+  const single = (s) => `<w:${s} w:val="single" w:sz="6" w:space="0" w:color="${hex6(borderColor)}"/>`;
+  const nil = (s) => `<w:${s} w:val="nil"/>`;
+  const SIDES = ['top', 'left', 'bottom', 'right', 'insideH', 'insideV'];
+  const bdr = borders === 'lines'
+    ? SIDES.map((s) => (s === 'bottom' || s === 'insideH' ? single(s) : nil(s))).join('') // 답란: 가로선만
+    : SIDES.map(borders ? single : nil).join('');
   const grid = widths ? `<w:tblGrid>${widths.map((w) => `<w:gridCol w:w="${twips(w)}"/>`).join('')}</w:tblGrid>` : '';
   const trs = t.rows.map((cells) => {
     const tcs = cells.map((c) => {

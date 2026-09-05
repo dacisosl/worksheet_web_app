@@ -69,7 +69,9 @@
     box-shadow: 0 2px 6px rgba(47, 109, 246, .35);
   }
   .brand .name { font-weight: 700; font-size: 14px; letter-spacing: -.2px; }
-  .brand .sub { font-size: 11px; color: var(--ink-3); margin-top: -3px; }
+  .brand .sub { font-size: 11px; color: var(--ink-3); margin-top: -3px; white-space: nowrap; }
+  .brand .sub a { color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; }
+  .brand .sub a:hover { color: var(--accent); }
   .head-actions { margin-left: auto; display: flex; gap: 2px; }
   .icon-btn {
     width: 32px; height: 32px; border-radius: var(--r-sm); display: grid; place-items: center;
@@ -326,7 +328,8 @@
         <span class="mark">활</span>
         <div>
           <div class="name">활동지 만들기</div>
-          <div class="sub">worksheet-grab __WSG_VERSION__</div>
+          <div class="sub">worksheet-grab __WSG_VERSION__ · 원작
+            <a href="https://github.com/pblsketch/worksheet-grab" target="_blank" rel="noreferrer noopener" title="원본 프로젝트 (GitHub)">pblsketch/worksheet-grab</a></div>
         </div>
       </div>
       <div class="head-actions">

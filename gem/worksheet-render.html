@@ -69,7 +69,9 @@
     box-shadow: 0 2px 6px rgba(47, 109, 246, .35);
   }
   .brand .name { font-weight: 700; font-size: 14px; letter-spacing: -.2px; }
-  .brand .sub { font-size: 11px; color: var(--ink-3); margin-top: -3px; }
+  .brand .sub { font-size: 11px; color: var(--ink-3); margin-top: -3px; white-space: nowrap; }
+  .brand .sub a { color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; }
+  .brand .sub a:hover { color: var(--accent); }
   .head-actions { margin-left: auto; display: flex; gap: 2px; }
   .icon-btn {
     width: 32px; height: 32px; border-radius: var(--r-sm); display: grid; place-items: center;
@@ -326,7 +328,8 @@
         <span class="mark">활</span>
         <div>
           <div class="name">활동지 만들기</div>
-          <div class="sub">worksheet-grab 0.6.0-beta.1</div>
+          <div class="sub">worksheet-grab 0.6.0-beta.1 · 원작
+            <a href="https://github.com/pblsketch/worksheet-grab" target="_blank" rel="noreferrer noopener" title="원본 프로젝트 (GitHub)">pblsketch/worksheet-grab</a></div>
         </div>
       </div>
       <div class="head-actions">
@@ -4254,6 +4257,61 @@ function normalizeMathInHtml(obj, ctx) {
     if (fixed !== v) obj[field] = fixed;
   }
   if (touched) ctx.notes.push(`\`${obj.id}\` 의 수식 안 \`<\`/\`>\` 를 \`\\lt\`/\`\\gt\` 로 바꿨습니다(HTML 태그로 읽히는 것을 막기 위해).`);
+  normalizeMathText(obj, ctx);
+}
+
+// 수식 표기의 흔한 이탈 두 가지를 개체의 모든 글 필드(선택지·표 셀·정답 포함)에서 고친다.
+//  1) `$$…$$` 표시 수식 → `$…$`. 렌더러의 KaTeX 는 인라인 `$…$` 만 등록되어 있어 `$$` 는 인쇄에도 원문이
+//     그대로 나오고, 편집용 문서 변환기도 잡지 못했다(실측: "$I = V/R … [\Omega]$" 가 그대로 남음).
+//  2) 수식 밖의 낱 기호 명령(`\Omega`, `\mu`, `\times` …) → 유니코드 글자. 모델이 "5 \Omega" 처럼 `$` 없이
+//     쓰는 일이 흔한데, `$` 가 없으면 어디서도 변환되지 않아 인쇄물에 백슬래시가 찍힌다.
+const BARE_SYMBOLS = {
+  Omega: 'Ω', ohm: 'Ω', mu: 'μ', pi: 'π', theta: 'θ', alpha: 'α', beta: 'β', gamma: 'γ', lambda: 'λ', sigma: 'σ',
+  omega: 'ω', Delta: 'Δ', rho: 'ρ', tau: 'τ', phi: 'φ', epsilon: 'ε', times: '×', div: '÷', pm: '±', cdot: '·',
+  le: '≤', leq: '≤', ge: '≥', geq: '≥', ne: '≠', neq: '≠', degree: '°', circ: '°', infty: '∞', rightarrow: '→', to: '→',
+  approx: '≈', propto: '∝', angle: '∠', perp: '⊥', parallel: '∥', therefore: '∴', because: '∵', celsius: '℃',
+};
+const BARE_SYMBOL_RE = new RegExp('\\\\(' + Object.keys(BARE_SYMBOLS).join('|') + ')(?![A-Za-z])', 'g');
+/** 값이 아니라 표식인 문자열 필드 — 여기의 `$`·백슬래시는 건드리지 않는다. */
+const NON_TEXT_KEYS = new Set(['id', 'type', 'placement', 'qtype', 'variant', 'kind', 'style', 'align', 'themeName',
+  'dataSubject', 'heading', 'slotLabel', 'codes', 'children', 'rect']);
+
+function fixMathText(s, hits) {
+  let out = s;
+  if (out.indexOf('$$') !== -1) {
+    const fixed = out.replace(/\$\$([^$]{1,400}?)\$\$/g, (m, inner) => '$' + inner.trim() + '$');
+    if (fixed !== out) { hits.display++; out = fixed; }
+  }
+  if (out.indexOf('\\') !== -1) {
+    // `$…$` 안은 그대로 두고(변환기가 처리한다) 밖만 바꾼다.
+    const parts = out.split(/(\$[^$\n]{1,400}?\$)/);
+    const fixed = parts.map((p, i) => (i % 2 === 1 ? p : p.replace(BARE_SYMBOL_RE, (m, name) => { hits.bare++; return BARE_SYMBOLS[name]; }))).join('');
+    out = fixed;
+  }
+  return out;
+}
+function walkStrings(node, hits, depth = 0) {
+  if (depth > 6 || node == null) return;
+  if (Array.isArray(node)) {
+    node.forEach((v, i) => {
+      if (typeof v === 'string') node[i] = fixMathText(v, hits);
+      else walkStrings(v, hits, depth + 1);
+    });
+    return;
+  }
+  if (typeof node !== 'object') return;
+  for (const key of Object.keys(node)) {
+    if (NON_TEXT_KEYS.has(key)) continue;
+    const v = node[key];
+    if (typeof v === 'string') node[key] = fixMathText(v, hits);
+    else if (v && typeof v === 'object') walkStrings(v, hits, depth + 1);
+  }
+}
+function normalizeMathText(obj, ctx) {
+  const hits = { display: 0, bare: 0 };
+  walkStrings(obj, hits);
+  if (hits.display) ctx.notes.push(`\`${obj.id}\` 의 표시 수식 \`$$…$$\` ${hits.display}곳을 인라인 \`$…$\` 로 바꿨습니다(렌더러는 인라인만 지원).`);
+  if (hits.bare) ctx.notes.push(`\`${obj.id}\` 의 수식 밖 기호 명령 ${hits.bare}개(\`\\Omega\` 등)를 유니코드 기호로 바꿨습니다.`);
 }
 
 /** columns 자식도 같은 정규화를 받는다(id·answerKey 모양·표 셀…). 챗봇이 `children:[q1,q2]` 처럼
@@ -4677,7 +4735,10 @@ const SYMBOLS = {
   pm: '±', mp: '∓', times: '×', cdot: '·', div: '÷', le: '≤', leq: '≤', ge: '≥', geq: '≥', ne: '≠', neq: '≠',
   lt: '<', gt: '>', iff: '⟺', Leftrightarrow: '⟺', Rightarrow: '⇒', rightarrow: '→', to: '→', leftarrow: '←',
   infty: '∞', pi: 'π', alpha: 'α', beta: 'β', gamma: 'γ', theta: 'θ', lambda: 'λ', mu: 'μ', sigma: 'σ', omega: 'ω',
-  Delta: 'Δ', angle: '∠', triangle: '△', circ: '°', degree: '°', ldots: '…', cdots: '⋯', dots: '…', approx: '≈',
+  Delta: 'Δ', Gamma: 'Γ', Theta: 'Θ', Lambda: 'Λ', Pi: 'Π', Sigma: 'Σ', Phi: 'Φ', Psi: 'Ψ', Omega: 'Ω', Xi: 'Ξ',
+  delta: 'δ', epsilon: 'ε', varepsilon: 'ε', zeta: 'ζ', eta: 'η', kappa: 'κ', nu: 'ν', xi: 'ξ', rho: 'ρ', tau: 'τ',
+  upsilon: 'υ', phi: 'φ', varphi: 'φ', chi: 'χ', psi: 'ψ', ohm: 'Ω', celsius: '℃',
+  angle: '∠', triangle: '△', circ: '°', degree: '°', ldots: '…', cdots: '⋯', dots: '…', approx: '≈',
   equiv: '≡', in: '∈', notin: '∉', subset: '⊂', cup: '∪', cap: '∩', emptyset: '∅', varnothing: '∅', perp: '⊥',
   parallel: '∥', propto: '∝', therefore: '∴', because: '∵', prime: '′', overline: '‾', bar: '‾',
   sum: 'Σ', prod: 'Π', int: '∫', partial: '∂', nabla: '∇', forall: '∀', exists: '∃', neg: '¬', land: '∧', lor: '∨',
@@ -4734,7 +4795,9 @@ function latexToRuns(src, stats = { unknown: 0 }, base = {}) {
         runs.push(...latexToRuns(g, stats, base));
         push(')');
       } else if (name === 'text' || name === 'mathrm' || name === 'mathbf' || name === 'operatorname' || name === 'textbf') {
-        push(readGroup(), name === 'mathbf' || name === 'textbf' ? { b: true } : {});
+        // 안쪽도 다시 변환한다 — `\text{(단위: [\Omega])}` 처럼 글 안에 기호 명령이 섞여 오는 일이 흔하다(실측).
+        const g = readGroup();
+        runs.push(...latexToRuns(g, stats, name === 'mathbf' || name === 'textbf' ? { ...base, b: true } : base));
       } else if (name === 'overline' || name === 'bar' || name === 'vec' || name === 'hat') {
         const g = readGroup(); runs.push(...latexToRuns(g, stats, base)); push(name === 'vec' ? '⃗' : '‾');
       } else if (Object.prototype.hasOwnProperty.call(SYMBOLS, name)) {
@@ -4840,7 +4903,7 @@ function blockHtmlToParagraphs(html, stats) {
 function P(runs, opts = {}) {
   return { kind: 'p', runs: runs || [], ...opts };
 }
-/** 표. rows: Cell[][], widths(pt). borders=false 면 선 없음. */
+/** 표. rows: Cell[][], widths(pt). borders: true(전부) | false(없음) | 'lines'(칸 아래 가로선만 — 답란). */
 function T(rows, opts = {}) {
   const { widths = null, borders = true, borderColor = 'CBD5C0', cellMargin = 5, indent = 0 } = opts;
   return { kind: 'table', rows, widths, borders, borderColor, cellMargin, indent };
@@ -5011,18 +5074,23 @@ function renderCallout(obj, ctx) {
   return boxTable(ctx, body, { header: { blocks: [P(label)], shade: ctx.theme.clite }, border: ctx.theme.c2 });
 }
 
-/** 답란 — 밑줄 문단 n 개(줄 간격 1.5). */
-function answerLines(n) {
-  const out = [];
-  for (let i = 0; i < n; i++) out.push(P([{ text: ' ' }], { border: { color: 'BBBBBB', widthPt: 0.5 }, line: 1.5, after: 3 }));
-  return out;
+/** 답란 — 가로선만 있는 1열 표(줄 하나 = 칸 하나, 9mm). 한글·워드 학습지의 관용 답란이라 칸에 바로 써넣을 수
+ *  있고, 줄을 늘리거나 줄이는 것도 표 행 추가·삭제로 자연스럽다(문단 테두리 밑줄은 글을 치면 선이 밀려 어색했다). */
+const ANSWER_LINE_MM = 9;
+function answerLines(n, ctx) {
+  const rows = [];
+  for (let i = 0; i < n; i++) rows.push([{ blocks: [P([])], width: ctx.contentWidth, minHeight: ptFromMm(ANSWER_LINE_MM) }]);
+  return [T(rows, { widths: [ctx.contentWidth], borders: 'lines', borderColor: 'BBBBBB', cellMargin: 2 })];
 }
 
 function renderQuestion(obj, ctx) {
   const stats = ctx.stats;
   const qnum = obj.qnum != null ? [{ text: `${CIRCLED[Number(obj.qnum) - 1] || obj.qnum} `, b: true, color: ctx.theme.c, size: 11 }] : [];
-  const prompt = typeof obj.promptHtml === 'string' && obj.promptHtml ? inlineHtmlToRuns(obj.promptHtml, stats, { b: true }) : [{ text: String(obj.prompt ?? ''), b: true }];
-  const blocks = [P([...qnum, ...prompt], { after: 4 })];
+  // 평문 필드(prompt·answerKey.text)도 인라인 처리기를 거친다 — `$…$` 수식이 평문에도 흔히 들어온다(실측).
+  const prompt = inlineHtmlToRuns(typeof obj.promptHtml === 'string' && obj.promptHtml ? obj.promptHtml : String(obj.prompt ?? ''), stats, { b: true });
+  // 문항은 상자(표)로 감싸지 않는다 — 한글·워드에서 문항을 지우고 붙이고 번호를 고치는 일이 표 안에서는
+  // 번거롭다(실측 피드백). 인쇄판의 상자는 PDF 쪽 일이고, 편집용은 "번호 문단 + 선택지 + 답란 표"가 자연스럽다.
+  const blocks = [P([...qnum, ...prompt], { before: 4, after: 4, keepNext: true })];
 
   switch (obj.qtype) {
     case 'multiple-choice': {
@@ -5061,21 +5129,22 @@ function renderQuestion(obj, ctx) {
       break;
     }
     case 'short-answer':
-      blocks.push(...answerLines(1));
+      blocks.push(...answerLines(1, ctx));
       break;
     case 'essay':
     default: {
       if (obj.lines === 0) break;
-      blocks.push(...answerLines(Math.max(1, Number(obj.lines) || 4)));
+      blocks.push(...answerLines(Math.max(1, Number(obj.lines) || 4), ctx));
     }
   }
 
   if (ctx.mode === 'teacher' && obj.answerKey) {
     const ak = obj.answerKey;
-    const runs = typeof ak.html === 'string' ? inlineHtmlToRuns(ak.html, stats) : [{ text: String(ak.text ?? '') }];
+    const runs = inlineHtmlToRuns(typeof ak.html === 'string' ? ak.html : String(ak.text ?? ''), stats);
     blocks.push(P([{ text: '정답  ', b: true, color: ctx.theme.cink, size: 9.5 }, ...runs.map((r) => ({ ...r, color: r.color || ctx.theme.cink, size: 9.5 }))], { shade: ctx.theme.clite, before: 4, after: 2 }));
   }
-  return boxTable(ctx, blocks, { border: 'CBD5C0' });
+  blocks.push(P([], { after: 6 })); // 문항 사이 숨 고르기
+  return blocks;
 }
 
 function renderTable(obj, ctx) {
@@ -5105,7 +5174,7 @@ function renderAnswerArea(obj, ctx) {
   const out = [];
   if (obj.label) out.push(P([{ text: String(obj.label), b: true, size: 9.5 }], { after: 2 }));
   if (obj.style === 'box') out.push(...boxTable(ctx, [P([], { before: 30, after: 30 })], { border: 'BBBBBB' }));
-  else out.push(...answerLines(Math.max(1, Number(obj.lines) || 3)));
+  else out.push(...answerLines(Math.max(1, Number(obj.lines) || 3), ctx));
   return out;
 }
 
@@ -5132,7 +5201,7 @@ function renderColumns(obj, ctx) {
   return [T([cells], { widths, borders: false, cellMargin: 2 }), P([], { after: 2 })];
 }
 
-return { ptFromMm, hex6, latexToRuns, inlineHtmlToRuns, blockHtmlToParagraphs, P, T, ensureBlocks, parseTheme, buildEditableDoc };
+return { ptFromMm, hex6, latexToRuns, inlineHtmlToRuns, blockHtmlToParagraphs, P, T, ensureBlocks, parseTheme, buildEditableDoc, ANSWER_LINE_MM };
 });
 
 __wsgDef("src/usecases/zipWriter.js", function (__wsgReq) {
@@ -5327,9 +5396,12 @@ function pXml(p) {
 // ── 표 ──────────────────────────────────────────────────────────────────────
 function tblXml(t) {
   const { widths = null, borders = true, borderColor = 'CBD5C0', cellMargin = 5, indent = 0 } = t;
-  const bdr = borders
-    ? ['top', 'left', 'bottom', 'right', 'insideH', 'insideV'].map((s) => `<w:${s} w:val="single" w:sz="6" w:space="0" w:color="${hex6(borderColor)}"/>`).join('')
-    : ['top', 'left', 'bottom', 'right', 'insideH', 'insideV'].map((s) => `<w:${s} w:val="nil"/>`).join('');
+  const single = (s) => `<w:${s} w:val="single" w:sz="6" w:space="0" w:color="${hex6(borderColor)}"/>`;
+  const nil = (s) => `<w:${s} w:val="nil"/>`;
+  const SIDES = ['top', 'left', 'bottom', 'right', 'insideH', 'insideV'];
+  const bdr = borders === 'lines'
+    ? SIDES.map((s) => (s === 'bottom' || s === 'insideH' ? single(s) : nil(s))).join('') // 답란: 가로선만
+    : SIDES.map(borders ? single : nil).join('');
   const grid = widths ? `<w:tblGrid>${widths.map((w) => `<w:gridCol w:w="${twips(w)}"/>`).join('')}</w:tblGrid>` : '';
   const trs = t.rows.map((cells) => {
     const tcs = cells.map((c) => {
@@ -5452,7 +5524,8 @@ const HWPUNIT_PER_PT = 100;                    // 1pt = 100 HWPUNIT(1/7200 inch)
 const hu = (pt) => Math.round(pt * HWPUNIT_PER_PT);
 const FONT = '함초롬돋움';
 const DEFAULT_SIZE_PT = 10.5;
-const DEFAULT_LINE_PERCENT = 130;
+const DEFAULT_LINE_PERCENT = 160;               // 한글 바탕글 기본과 같게 — 교사가 익숙한 줄간격
+const CELL_MARGIN_V = 1.41;                      // 한글 기본 셀 안 여백(위·아래 0.5mm = 141 HWPUNIT)
 const BORDER_WIDTH = '0.12 mm';
 
 const NS = 'xmlns:ha="http://www.hancom.co.kr/hwpml/2011/app" xmlns:hp="http://www.hancom.co.kr/hwpml/2011/paragraph" '
@@ -5511,7 +5584,8 @@ function charPrXml(id, r) {
 }
 
 function paraPrXml(id, p) {
-  const align = { left: 'LEFT', center: 'CENTER', right: 'RIGHT', both: 'JUSTIFY' }[p.align] || 'LEFT';
+  // 기본은 양쪽 정렬 — 한글 바탕글의 기본이라 교사가 문단을 이어 써도 모양이 튀지 않는다.
+  const align = { left: 'LEFT', center: 'CENTER', right: 'RIGHT', both: 'JUSTIFY' }[p.align] || 'JUSTIFY';
   const margin = `<hh:margin><hc:intent value="0" unit="HWPUNIT"/><hc:left value="${hu(p.indent || 0)}" unit="HWPUNIT"/><hc:right value="0" unit="HWPUNIT"/>`
     + `<hc:prev value="${hu(p.before || 0)}" unit="HWPUNIT"/><hc:next value="${hu(p.after || 0)}" unit="HWPUNIT"/></hh:margin>`
     + `<hh:lineSpacing type="PERCENT" value="${p.line ? Math.round(p.line * 100) : DEFAULT_LINE_PERCENT}" unit="HWPUNIT"/>`;
@@ -5580,15 +5654,17 @@ class Writer {
     }).join('');
   }
 
-  /** 표 → 표를 담은 문단 하나. 셀 테두리·채움은 borderFill 로 등록한다. */
-  table(t) {
+  /** 표 → 표를 담은 문단 하나. 셀 테두리·채움은 borderFill 로 등록한다. after: 표 문단 아래 간격(pt). */
+  table(t, after = 0) {
     const rows = t.rows || [];
     const colCount = Math.max(...rows.map((r) => r.reduce((n, c) => n + (c.span || 1), 0)), 1);
     const widths = t.widths || rows[0].map((c) => c.width || 0);
     const totalW = hu(widths.reduce((a, b) => a + b, 0));
-    const margin = hu(t.cellMargin != null ? t.cellMargin : 5);
-    const on = !!t.borders;
-    const cellFill = (shade) => this.borderFill({ l: on, r: on, t: on, b: on, color: t.borderColor || 'CBD5C0', fill: shade || null });
+    const mh = hu(t.cellMargin != null ? t.cellMargin : 5);
+    const mv = hu(CELL_MARGIN_V);
+    // borders: true=사방, false=없음, 'lines'=칸 아래 가로선만(답란)
+    const side = t.borders === 'lines' ? { l: false, r: false, t: false, b: true } : { l: !!t.borders, r: !!t.borders, t: !!t.borders, b: !!t.borders };
+    const cellFill = (shade) => this.borderFill({ ...side, color: t.borderColor || 'CBD5C0', fill: shade || null });
     const tableBorder = cellFill(null);
 
     const rowHeights = rows.map((cells) => hu(Math.max(13, ...cells.map((c) => c.minHeight || 0))));
@@ -5597,13 +5673,13 @@ class Writer {
       const tcs = cells.map((c) => {
         const span = c.span || 1;
         const width = hu(c.width || widths.slice(col, col + span).reduce((a, b) => a + b, 0));
-        const inner = (c.blocks || []).map((b) => this.block(b)).join('') || this.paragraph({ runs: [] });
+        const inner = this.blocks(c.blocks || []) || this.paragraph({ runs: [] });
         const tc = `<hp:tc name="" header="0" hasMargin="0" protect="0" editable="0" dirty="0" borderFillIDRef="${cellFill(c.shade)}">`
           + `<hp:subList id="" textDirection="HORIZONTAL" lineWrap="BREAK" vertAlign="${c.vAlign === 'center' ? 'CENTER' : 'TOP'}" linkListIDRef="0" linkListNextIDRef="0" textWidth="0" textHeight="0" hasTextRef="0" hasNumRef="0">`
           + inner + '</hp:subList>'
           + `<hp:cellAddr colAddr="${col}" rowAddr="${ri}"/><hp:cellSpan colSpan="${span}" rowSpan="1"/>`
           + `<hp:cellSz width="${width}" height="${rowHeights[ri]}"/>`
-          + `<hp:cellMargin left="${margin}" right="${margin}" top="${margin}" bottom="${margin}"/></hp:tc>`;
+          + `<hp:cellMargin left="${mh}" right="${mh}" top="${mv}" bottom="${mv}"/></hp:tc>`;
         col += span;
         return tc;
       }).join('');
@@ -5613,13 +5689,30 @@ class Writer {
     const tbl = `<hp:tbl id="${this.uid()}" zOrder="${this.zOrder++}" numberingType="TABLE" textWrap="TOP_AND_BOTTOM" textFlow="BOTH_SIDES" lock="0" dropcapstyle="None" pageBreak="CELL" repeatHeader="0" rowCnt="${rows.length}" colCnt="${colCount}" cellSpacing="0" borderFillIDRef="${tableBorder}" noAdjust="0">`
       + `<hp:sz width="${totalW}" widthRelTo="ABSOLUTE" height="${rowHeights.reduce((a, b) => a + b, 0)}" heightRelTo="ABSOLUTE" protect="0"/>`
       + '<hp:pos treatAsChar="1" affectLSpacing="0" flowWithText="1" allowOverlap="0" holdAnchorAndSO="0" vertRelTo="PARA" horzRelTo="COLUMN" vertAlign="TOP" horzAlign="LEFT" vertOffset="0" horzOffset="0"/>'
-      + `<hp:outMargin left="0" right="0" top="0" bottom="0"/><hp:inMargin left="${margin}" right="${margin}" top="${margin}" bottom="${margin}"/>`
+      + `<hp:outMargin left="0" right="0" top="0" bottom="0"/><hp:inMargin left="${mh}" right="${mh}" top="${mv}" bottom="${mv}"/>`
       + trs + '</hp:tbl>';
-    const paraPrId = this.paraPr({ indent: t.indent || 0 });
+    const paraPrId = this.paraPr({ indent: t.indent || 0, after });
     return `<hp:p id="${this.uid()}" paraPrIDRef="${paraPrId}" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0"><hp:run charPrIDRef="0">${tbl}</hp:run></hp:p>`;
   }
 
-  block(b) { return b.kind === 'table' ? this.table(b) : this.paragraph(b); }
+  /** 블록 목록. 표 뒤의 "간격용 빈 문단"은 표 문단의 아래 간격으로 접는다 — 한글에서 표는 이미 자기 문단을
+   *  갖고 있어 빈 문단이 따로 남으면 표 사이마다 커서가 서는 빈 줄이 생겨 편집이 어색하다(워드는 표가 붙어
+   *  버리므로 빈 문단이 필요하지만, 여기서는 아니다). */
+  blocks(list) {
+    let out = '';
+    for (let i = 0; i < list.length; i++) {
+      const b = list[i];
+      if (b.kind !== 'table') { out += this.paragraph(b); continue; }
+      const nx = list[i + 1];
+      let after = 0;
+      if (nx && nx.kind === 'p' && !(nx.runs || []).length && !nx.border && !nx.shade && !nx.pageBreakBefore) {
+        after = (nx.before || 0) + (nx.after || 0);
+        i++;
+      }
+      out += this.table(b, after);
+    }
+    return out;
+  }
 }
 
 function secPrXml(page) {
@@ -5653,8 +5746,8 @@ class ExportHwpx {
     // 첫 문단이 구역 설정(용지·여백)을 지닌다 — 모델의 첫 블록은 항상 모드 표식 문단이다.
     const [first, ...rest] = model.blocks;
     const lead = `<hp:run charPrIDRef="0">${secPrXml(model.page)}</hp:run>`;
-    const body = (first.kind === 'p' ? w.paragraph(first, lead) : w.paragraph({ runs: [] }, lead) + w.block(first))
-      + rest.map((b) => w.block(b)).join('');
+    const body = (first.kind === 'p' ? w.paragraph(first, lead) : w.paragraph({ runs: [] }, lead) + w.blocks([first]))
+      + w.blocks(rest);
 
     const sectionXml = XML_DECL + `<hs:sec ${NS}>${body}</hs:sec>`;
     const headerXml = XML_DECL + headXml(w);
@@ -6347,7 +6440,7 @@ return { ExportHwpx };
     downloadBlob(new Blob([result.bytes], { type: fmt.mime }), name);
     var notes = result.notes.length ? '<br>' + result.notes.map(function (n) { return '· ' + esc(n); }).join('<br>') : '';
     pushAI('<b>' + esc(name) + '</b> 를 내려받았습니다. ' + fmt.app + '에서 열어 고치세요 — 편집용이라 쪽 나눔은 프로그램이 다시 잡고, '
-      + '상자는 표로, 답란은 밑줄로 바뀝니다. 인쇄물은 [인쇄 · PDF 저장]이 정확합니다.' + notes);
+      + '개념 상자는 표로, 문항은 번호 문단으로, 답란은 가로선 표로 들어갑니다. 인쇄물은 [인쇄 · PDF 저장]이 정확합니다.' + notes);
   }
 
   // ── 보관함(IndexedDB) ───────────────────────────────────────────────────
