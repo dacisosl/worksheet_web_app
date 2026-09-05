@@ -22,6 +22,7 @@
   var ReviewMod = __wsgReq('src/usecases/ValidateWorksheet.js');
   var ScanMod = __wsgReq('src/usecases/html-scan.js');
   var DocxMod = __wsgReq('src/usecases/ExportDocx.js');
+  var HwpxMod = __wsgReq('src/usecases/ExportHwpx.js');
 
   var $ = function (id) { return document.getElementById(id); };
   var el = {
@@ -30,7 +31,11 @@
     // 뷰어
     frame: $('frame'), measure: $('measure'), empty: $('empty'), pageInfo: $('pageInfo'),
     tabStudent: $('tabStudent'), tabTeacher: $('tabTeacher'), btnPrint: $('btnPrint'), btnSaveHtml: $('btnSaveHtml'),
-    btnSaveDocx: $('btnSaveDocx'),
+    btnSaveDocx: $('btnSaveDocx'), btnSaveHwpx: $('btnSaveHwpx'),
+    // 보관함
+    library: $('library'), btnLibrary: $('btnLibrary'), btnLibraryClose: $('btnLibraryClose'),
+    libList: $('libList'), libSearch: $('libSearch'), libCount: $('libCount'), libStatus: $('libStatus'),
+    libFileIn: $('libFileIn'), btnLibBackup: $('btnLibBackup'), libRestoreIn: $('libRestoreIn'),
     // 설정
     settings: $('settings'), btnSettings: $('btnSettings'), btnSettingsInline: $('btnSettingsInline'),
     btnSettingsClose: $('btnSettingsClose'),
@@ -347,6 +352,12 @@
       return;
     }
     if (!opts.silentUser) pushUser('활동지 JSON을 붙여넣었습니다.');
+    // 붙여넣은 JSON 은 새 활동지다 — 이전 대화·보관함 항목에 이어 붙이지 않는다(AI·보관함 경로는 keepChat).
+    if (!opts.keepChat && !opts.silentUser && typeof chat !== 'undefined') {
+      chat.history = [];
+      chat.libraryId = null;
+      chat.firstRequest = '';
+    }
     setOutputs(null);
     clearLog();
 
@@ -451,6 +462,10 @@
       say('ok', '검수 통과 — 학생용 정답 제거 확인.');
       setOutputs(variants);
       preview();
+      // 보관함 저장 + 대화 맥락 보장(붙여넣기 경로도 이어서 고칠 수 있게). 내장 예시는 보관하지 않는다.
+      var rawJson = JSON.stringify(raw, null, 2);
+      seedHistory(doc, rawJson);
+      if (text !== JSON.stringify(SAMPLE, null, 2)) librarySave(doc, rawJson);
       // 걸린 시간을 결과에 남긴다 — 교사가 다음 요청에서 무엇을 기다릴지 알게 된다.
       var aiMs = (typeof chat !== 'undefined' && chat.lastAiMs) || 0;
       var timeTag = aiMs
@@ -492,6 +507,7 @@
     el.btnPrint.disabled = !has;
     el.btnSaveHtml.disabled = !has;
     el.btnSaveDocx.disabled = !has;
+    el.btnSaveHwpx.disabled = !has;
     el.pageInfo.hidden = !has;
     el.tabStudent.disabled = !!(variants && !variants.student);
     if (has) el.pageInfo.textContent = 'A4 ' + state.pageCount + '쪽';
@@ -570,24 +586,232 @@
     downloadBlob(new Blob([html], { type: 'text/html;charset=utf-8' }), name);
   }
 
-  /** 편집용 DOCX — 현재 탭(학생용/교사용) 기준. 학생 벌은 BuildVariants 와 같은 함수로 정답을 지운다. */
-  function saveDocx() {
-    if (!state.paginatedDoc || !currentHtml()) return;
+  /** 편집용 문서 형식 — 둘 다 같은 편집용 모델(editableDoc)에서 나오므로 내용이 같다. */
+  var EDITABLE = {
+    docx: { ctor: function () { return DocxMod.ExportDocx; }, ext: 'docx', app: '한글·워드',
+      mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' },
+    hwpx: { ctor: function () { return HwpxMod.ExportHwpx; }, ext: 'hwpx', app: '한글', mime: 'application/hwp+zip' },
+  };
+
+  /** 편집용 DOCX/HWPX — 현재 탭(학생용/교사용) 기준. 학생 벌은 BuildVariants 와 같은 함수로 정답을 지운다. */
+  function saveEditable(kind) {
+    var fmt = EDITABLE[kind];
+    if (!fmt || !state.paginatedDoc || !currentHtml()) return;
     var teacher = state.mode === 'teacher';
     var tree = teacher ? state.paginatedDoc : VariantsMod.stripAnswersFromDocument(state.paginatedDoc);
     var result;
     try {
-      result = new DocxMod.ExportDocx().execute(tree, { mode: teacher ? 'teacher' : 'student', themeCss: state.themeCss });
+      var Exporter = fmt.ctor();
+      result = new Exporter().execute(tree, { mode: teacher ? 'teacher' : 'student', themeCss: state.themeCss });
     } catch (e) {
-      pushAI('DOCX 를 만들지 못했습니다: ' + esc(e && e.message ? e.message : String(e)));
+      pushAI(fmt.ext.toUpperCase() + ' 를 만들지 못했습니다: ' + esc(e && e.message ? e.message : String(e)));
       return;
     }
-    var name = state.docTitle + '_' + (teacher ? '교사용' : '학생용') + '.docx';
-    downloadBlob(new Blob([result.bytes], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }), name);
+    var name = state.docTitle + '_' + (teacher ? '교사용' : '학생용') + '.' + fmt.ext;
+    downloadBlob(new Blob([result.bytes], { type: fmt.mime }), name);
     var notes = result.notes.length ? '<br>' + result.notes.map(function (n) { return '· ' + esc(n); }).join('<br>') : '';
-    pushAI('<b>' + esc(name) + '</b> 를 내려받았습니다. 한글·워드에서 열어 고치세요 — 편집용이라 쪽 나눔은 프로그램이 다시 잡고, '
+    pushAI('<b>' + esc(name) + '</b> 를 내려받았습니다. ' + fmt.app + '에서 열어 고치세요 — 편집용이라 쪽 나눔은 프로그램이 다시 잡고, '
       + '상자는 표로, 답란은 밑줄로 바뀝니다. 인쇄물은 [인쇄 · PDF 저장]이 정확합니다.' + notes);
   }
+
+  // ── 보관함(IndexedDB) ───────────────────────────────────────────────────
+  // 만든 활동지는 이 브라우저의 IndexedDB 에 자동 저장한다 — 서버가 없으니 교사의 PC 가 유일한 저장소다.
+  // 한 대화(＋ 를 누르기 전까지)는 한 항목이다: 고칠 때마다 같은 항목을 덧쓴다("수정 이력"이 아니라
+  // "만든 활동지 목록"이 목적). 다른 PC 로 옮기는 길은 [JSON]·[전체 백업] 내려받기다.
+  var LIB_DB = 'wsg-library';
+  var LIB_STORE = 'worksheets';
+  var libDbPromise = null;
+
+  function libDb() {
+    if (libDbPromise) return libDbPromise;
+    libDbPromise = new Promise(function (resolve, reject) {
+      var idb = window.indexedDB;
+      if (!idb) { reject(new Error('이 브라우저는 보관함(IndexedDB)을 지원하지 않습니다.')); return; }
+      var req = idb.open(LIB_DB, 1);
+      req.onupgradeneeded = function () {
+        var db = req.result;
+        if (!db.objectStoreNames.contains(LIB_STORE)) db.createObjectStore(LIB_STORE, { keyPath: 'id' });
+      };
+      req.onsuccess = function () { resolve(req.result); };
+      req.onerror = function () { reject(req.error || new Error('보관함을 열 수 없습니다.')); };
+    });
+    libDbPromise.catch(function () { libDbPromise = null; }); // 다음 시도에서 다시 연다
+    return libDbPromise;
+  }
+  /** 트랜잭션 하나에 요청 하나 — fn 이 IDBRequest 를 돌려주면 그 결과로 resolve. */
+  function libTx(mode, fn) {
+    return libDb().then(function (db) {
+      return new Promise(function (resolve, reject) {
+        var tx = db.transaction(LIB_STORE, mode);
+        var req = fn(tx.objectStore(LIB_STORE));
+        tx.oncomplete = function () { resolve(req ? req.result : undefined); };
+        tx.onerror = function () { reject(tx.error || new Error('보관함 작업에 실패했습니다.')); };
+        tx.onabort = tx.onerror;
+      });
+    });
+  }
+  function libAll() { return libTx('readonly', function (s) { return s.getAll(); }); }
+  function libGet(id) { return libTx('readonly', function (s) { return s.get(id); }); }
+  function libPut(rec) { return libTx('readwrite', function (s) { return s.put(rec); }); }
+  function libDelete(id) { return libTx('readwrite', function (s) { return s.delete(id); }); }
+  function libId() { return 'ws_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+  /** 검수를 통과한 활동지를 보관함에 넣는다(같은 대화면 덧쓰기). 실패해도 활동지 흐름은 막지 않는다. */
+  function librarySave(doc, rawJson) {
+    var hasChat = typeof chat !== 'undefined';
+    var id = (hasChat && chat.libraryId) || libId();
+    var now = Date.now();
+    return libGet(id).then(function (prev) {
+      return libPut({
+        id: id,
+        title: String(doc.docTitle || '활동지'),
+        theme: resolveTheme(doc),
+        request: (hasChat && chat.firstRequest) || (prev && prev.request) || '',
+        json: rawJson,
+        history: hasChat ? chat.history.slice() : [],
+        pages: state.pageCount,
+        questions: state.questionCount,
+        createdAt: prev ? prev.createdAt : now,
+        updatedAt: now,
+      });
+    }).then(function () {
+      if (hasChat) chat.libraryId = id;
+      say('muted', '보관함에 저장했습니다(⊟ 버튼).');
+    }).catch(function (e) {
+      say('warn', '보관함에 저장하지 못했습니다: ' + esc(e && e.message ? e.message : String(e)));
+    });
+  }
+
+  /** 붙여넣기·보관함 경로처럼 AI 대화 없이 온 활동지도 "이걸 고쳐줘"가 되게 대화 맥락을 만들어 준다. */
+  function seedHistory(doc, rawJson) {
+    if (typeof chat === 'undefined' || chat.history.length) return;
+    var request = chat.firstRequest || ('활동지 「' + (doc.docTitle || '활동지') + '」');
+    chat.history = [
+      { role: 'user', text: '교사 요청: ' + request + '\n\n(이미 만들어진 활동지입니다. `standards` 의 성취기준은 그대로 유지하세요.)' },
+      { role: 'model', text: rawJson },
+    ];
+    chat.subjectHint = resolveTheme(doc) === 'math' ? 'math' : 'general';
+  }
+
+  var THEME_LABEL = { ko: '국어', sci: '과학', social: '사회', english: '영어', math: '수학' };
+  function fmtDate(ms) {
+    var d = new Date(ms);
+    var p = function (n) { return (n < 10 ? '0' : '') + n; };
+    return d.getFullYear() + '.' + p(d.getMonth() + 1) + '.' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+  function libStatus(msg, isErr) {
+    el.libStatus.textContent = msg || '';
+    el.libStatus.className = 'lib-status' + (isErr ? ' err' : '');
+  }
+
+  function renderLibrary() {
+    var needle = el.libSearch.value.trim().toLowerCase();
+    return libAll().then(function (list) {
+      list.sort(function (a, b) { return (b.updatedAt || 0) - (a.updatedAt || 0); });
+      el.libCount.hidden = !list.length;
+      el.libCount.textContent = list.length + '개';
+      var shown = list.filter(function (r) {
+        return !needle || (String(r.title) + ' ' + (r.request || '')).toLowerCase().indexOf(needle) !== -1;
+      });
+      el.libList.innerHTML = '';
+      if (!shown.length) {
+        var empty = document.createElement('div');
+        empty.className = 'lib-empty';
+        empty.textContent = list.length ? '검색 결과가 없습니다.' : '아직 보관된 활동지가 없습니다.\n활동지를 만들면 여기에 자동으로 쌓입니다.';
+        el.libList.appendChild(empty);
+        return;
+      }
+      shown.forEach(function (r) { el.libList.appendChild(libraryItem(r)); });
+    }).catch(function (e) {
+      el.libList.innerHTML = '';
+      libStatus(e && e.message ? e.message : String(e), true);
+    });
+  }
+  function libraryItem(r) {
+    var item = document.createElement('div');
+    item.className = 'lib-item';
+    item.innerHTML = '<div class="info"><div class="title"></div><div class="meta"></div><div class="req"></div></div>'
+      + '<div class="acts"><button class="btn sm" data-act="open">열기</button>'
+      + '<button class="btn sm" data-act="json" title="활동지 JSON 내려받기">JSON</button>'
+      + '<button class="btn sm" data-act="del">삭제</button></div>';
+    item.querySelector('.title').textContent = r.title;
+    item.querySelector('.meta').textContent = [
+      THEME_LABEL[r.theme] || r.theme, r.pages ? 'A4 ' + r.pages + '쪽' : '', r.questions ? '문항 ' + r.questions + '개' : '', fmtDate(r.updatedAt),
+    ].filter(Boolean).join(' · ');
+    var req = item.querySelector('.req');
+    req.textContent = r.request || '';
+    req.hidden = !r.request;
+    item.addEventListener('click', function (e) {
+      var act = e.target && e.target.getAttribute ? e.target.getAttribute('data-act') : null;
+      if (act === 'json') { libraryDownload(r); return; }
+      if (act === 'del') { libraryRemove(r); return; }
+      libraryOpen(r);
+    });
+    return item;
+  }
+  function safeName(s) { return String(s).replace(/[\\/:*?"<>|]/g, '_'); }
+  function libraryDownload(r) {
+    downloadBlob(new Blob([r.json], { type: 'application/json;charset=utf-8' }), safeName(r.title) + '.json');
+    libStatus('「' + r.title + '」 JSON 을 내려받았습니다. 설정의 [JSON 직접 넣기]나 [JSON 불러오기]로 다시 열 수 있습니다.');
+  }
+  function libraryRemove(r) {
+    if (!window.confirm('「' + r.title + '」을 보관함에서 지울까요? 되돌릴 수 없습니다.')) return;
+    libDelete(r.id).then(function () {
+      if (typeof chat !== 'undefined' && chat.libraryId === r.id) chat.libraryId = null;
+      libStatus('지웠습니다.');
+      renderLibrary();
+    }).catch(function (e) { libStatus(e && e.message ? e.message : String(e), true); });
+  }
+  /** 보관함 항목을 뷰어에 다시 띄운다 — 대화 맥락도 함께 되살려 이어서 고칠 수 있게. */
+  function libraryOpen(r) {
+    closeLibrary();
+    if (typeof chat !== 'undefined') {
+      chat.history = Array.isArray(r.history) ? r.history.slice() : [];
+      chat.libraryId = r.id;
+      chat.firstRequest = r.request || '';
+      chat.subjectHint = r.theme === 'math' ? 'math' : 'general';
+    }
+    el.src.value = r.json;
+    resetThread();
+    pushAI('<b>' + esc(r.title) + '</b> 을 보관함에서 불러왔어요. 다시 조판해 오른쪽에 띄웁니다 — 이어서 고쳐 달라고 말해도 됩니다.');
+    run({ silentUser: true, keepChat: true });
+  }
+  /** 파일의 활동지 JSON 을 새 항목으로 연다. */
+  function libraryImportFile(file) {
+    closeLibrary();
+    readFileInto(file);
+  }
+  function libraryBackup() {
+    libAll().then(function (list) {
+      if (!list.length) { libStatus('보관된 활동지가 없습니다.', true); return; }
+      var payload = { app: 'worksheet-grab', kind: 'library-backup', version: 1, exportedAt: new Date().toISOString(), items: list };
+      downloadBlob(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' }),
+        '활동지_보관함_' + fmtDate(Date.now()).replace(/[.: ]/g, '') + '.json');
+      libStatus(list.length + '개를 한 파일로 내려받았습니다. 다른 PC 의 [백업 복원]에 넣으면 그대로 살아납니다.');
+    }).catch(function (e) { libStatus(e && e.message ? e.message : String(e), true); });
+  }
+  function libraryRestore(file) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      var data;
+      try { data = JSON.parse(String(reader.result)); } catch (e) { libStatus('백업 파일을 읽을 수 없습니다.', true); return; }
+      var items = data && data.kind === 'library-backup' && Array.isArray(data.items) ? data.items : null;
+      if (!items) { libStatus('보관함 백업 파일이 아닙니다. 활동지 JSON 하나는 [JSON 불러오기]로 여세요.', true); return; }
+      var valid = items.filter(function (r) { return r && typeof r.id === 'string' && typeof r.json === 'string'; });
+      Promise.all(valid.map(function (r) { return libPut(r); })).then(function () {
+        libStatus(valid.length + '개를 복원했습니다(같은 항목은 덧썼습니다).');
+        renderLibrary();
+      }).catch(function (e) { libStatus(e && e.message ? e.message : String(e), true); });
+    };
+    reader.readAsText(file, 'utf-8');
+  }
+  function openLibrary() {
+    el.library.hidden = false;
+    libStatus('');
+    renderLibrary();
+    setTimeout(function () { try { el.libSearch.focus(); } catch (e) { /* noop */ } }, 30);
+  }
+  function closeLibrary() { el.library.hidden = true; }
 
   // ── 설정 모달 ───────────────────────────────────────────────────────────
   function openSettings(pane) {
@@ -624,7 +848,27 @@
   });
   el.btnPrint.addEventListener('click', printCurrent);
   el.btnSaveHtml.addEventListener('click', saveHtml);
-  el.btnSaveDocx.addEventListener('click', saveDocx);
+  el.btnSaveDocx.addEventListener('click', function () { saveEditable('docx'); });
+  el.btnSaveHwpx.addEventListener('click', function () { saveEditable('hwpx'); });
+
+  // 보관함
+  el.btnLibrary.addEventListener('click', openLibrary);
+  el.btnLibraryClose.addEventListener('click', closeLibrary);
+  el.library.addEventListener('click', function (e) {
+    if (e.target && e.target.hasAttribute && e.target.hasAttribute('data-close-lib')) closeLibrary();
+  });
+  el.libSearch.addEventListener('input', renderLibrary);
+  el.libFileIn.addEventListener('change', function (e) {
+    var file = e.target.files && e.target.files[0];
+    if (file) libraryImportFile(file);
+    e.target.value = '';
+  });
+  el.btnLibBackup.addEventListener('click', libraryBackup);
+  el.libRestoreIn.addEventListener('change', function (e) {
+    var file = e.target.files && e.target.files[0];
+    if (file) libraryRestore(file);
+    e.target.value = '';
+  });
   el.tabStudent.addEventListener('click', function () { state.mode = 'student'; syncTabs(); preview(); });
   el.tabTeacher.addEventListener('click', function () { state.mode = 'teacher'; syncTabs(); preview(); });
 
@@ -638,7 +882,9 @@
     b.addEventListener('click', function () { selectPane(b.dataset.pane); });
   });
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && !el.settings.hidden) closeSettings();
+    if (e.key !== 'Escape') return;
+    if (!el.settings.hidden) closeSettings();
+    if (!el.library.hidden) closeLibrary();
   });
 
   // 예시 요청 칩 — 그대로 보내 본다.

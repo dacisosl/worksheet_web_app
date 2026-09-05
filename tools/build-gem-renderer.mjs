@@ -31,6 +31,7 @@ const ENTRIES = [
   'src/usecases/NormalizeAuthoredDoc.js',
   'src/usecases/ValidateWorksheet.js',
   'src/usecases/ExportDocx.js',
+  'src/usecases/ExportHwpx.js',
   'src/domain/schema/exportGate.js',
 ];
 

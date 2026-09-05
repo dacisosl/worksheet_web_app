@@ -14,7 +14,8 @@
 // 키는 이 브라우저 localStorage 에만 저장하고, 서버를 거치지 않고 각 API 로 직접 보낸다.
 
 var LS_PROVIDER = 'wsg.ai.provider';
-var chat = { history: [], busy: false, subjectHint: 'general', lastAiMs: 0 }; // history: [{role:'user'|'model', text}]
+// history: [{role:'user'|'model', text}] · libraryId: 이 대화가 덧쓰는 보관함 항목 · firstRequest: 교사의 첫 요청문
+var chat = { history: [], busy: false, subjectHint: 'general', lastAiMs: 0, libraryId: null, firstRequest: '' };
 
 function lsGet(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
 function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* 사생활 보호 모드 */ } }
@@ -466,6 +467,8 @@ function ask() {
   } else {
     var found = searchStandards(request, STD_SEARCH_LIMIT);
     userText = firstUserMessage(request, found);
+    chat.firstRequest = request;
+    chat.libraryId = null; // 새 활동지 — 보관함에 새 항목으로 들어간다
     chat.subjectHint = isMathSubject(found.subjects) || /수학/.test(request) ? 'math' : 'general';
     var where = [found.school, found.subjects.slice(0, 3).join('/')].filter(Boolean).join(' ');
     say('muted', '성취기준 ' + found.hits.length + '건을 함께 보냅니다'
@@ -543,6 +546,8 @@ el.ask.addEventListener('keydown', function (e) {
 });
 el.btnNew.addEventListener('click', function () {
   chat.history = [];
+  chat.libraryId = null;
+  chat.firstRequest = '';
   el.ask.value = '';
   el.ask.placeholder = '중2 과학 옴의 법칙 활동지 만들어줘';
   el.src.value = '';

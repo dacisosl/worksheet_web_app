@@ -284,6 +284,28 @@
   }
   .notice b { font-weight: 700; }
   label.file input { display: none; }
+
+  /* ══ 보관함 ═════════════════════════════════════════════════════════════ */
+  .sheet.wide { width: min(760px, 100%); }
+  .lib-tools { display: flex; gap: 7px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+  .lib-tools .input { flex: 1 1 160px; }
+  .btn.sm { padding: 5px 10px; font-size: 12px; box-shadow: none; }
+  .lib-list { display: flex; flex-direction: column; gap: 8px; }
+  .lib-item {
+    display: flex; gap: 12px; align-items: flex-start; padding: 11px 13px; cursor: pointer;
+    border: 1px solid var(--line); border-radius: var(--r-md); background: var(--bg);
+    transition: border-color .12s, box-shadow .12s;
+  }
+  .lib-item:hover { border-color: #c9d5f0; box-shadow: var(--shadow-1); }
+  .lib-item .info { flex: 1; min-width: 0; }
+  .lib-item .title { font-weight: 700; font-size: 13.5px; }
+  .lib-item .meta { font-size: 11.5px; color: var(--ink-3); margin-top: 3px; font-variant-numeric: tabular-nums; }
+  .lib-item .req { font-size: 12px; color: var(--ink-2); margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lib-item .acts { display: flex; gap: 5px; flex: none; }
+  .lib-empty { text-align: center; color: var(--ink-3); padding: 34px 10px; font-size: 13px; line-height: 1.6; }
+  .lib-status { font-size: 12px; color: var(--ok); margin: 0 0 10px; min-height: 1em; }
+  .lib-status.err { color: var(--err); }
+  .lib-note { font-size: 11.5px; color: var(--ink-3); margin: 12px 0 0; line-height: 1.55; }
   .spin {
     display: inline-block; width: 11px; height: 11px; vertical-align: -1px; margin-right: 5px;
     border: 2px solid #cfd6e2; border-top-color: var(--accent); border-radius: 50%;
@@ -310,6 +332,9 @@
       <div class="head-actions">
         <button id="btnNew" class="icon-btn" title="새 대화 시작" aria-label="새 대화 시작">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+        <button id="btnLibrary" class="icon-btn" title="보관함 — 만든 활동지 보기" aria-label="보관함">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18v3H3zM5 10v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9M10 14h4"/></svg>
         </button>
         <button id="btnSettings" class="icon-btn" title="설정" aria-label="설정">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 8.9 19.3a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.7 8.9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.56 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg>
@@ -352,6 +377,10 @@
       </div>
       <span id="pageInfo" class="pill" hidden></span>
       <span class="grow"></span>
+      <button id="btnSaveHwpx" class="btn" disabled title="한글에서 바로 열어 편집할 수 있는 문서(레이아웃은 근사)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg>
+        HWPX
+      </button>
       <button id="btnSaveDocx" class="btn" disabled title="한글·워드에서 편집할 수 있는 문서(레이아웃은 근사)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg>
         DOCX
@@ -466,6 +495,35 @@
         </div>
       </section>
 
+    </div>
+  </div>
+</div>
+
+<!-- ══ 보관함 ══ -->
+<div id="library" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="libraryTitle">
+  <div class="veil" data-close-lib></div>
+  <div class="sheet wide">
+    <div class="sheet-head">
+      <h2 id="libraryTitle">보관함</h2>
+      <span id="libCount" class="pill" style="margin-left:8px" hidden></span>
+      <span class="grow"></span>
+      <button id="btnLibraryClose" class="icon-btn" title="닫기" aria-label="닫기">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="sheet-body">
+      <div class="lib-tools">
+        <input id="libSearch" class="input" type="text" placeholder="제목·요청으로 찾기" autocomplete="off">
+        <label class="file"><span class="btn">JSON 불러오기</span><input id="libFileIn" type="file" accept=".json,.txt,application/json"></label>
+        <button id="btnLibBackup" class="btn">전체 백업</button>
+        <label class="file"><span class="btn">백업 복원</span><input id="libRestoreIn" type="file" accept=".json,application/json"></label>
+      </div>
+      <p id="libStatus" class="lib-status"></p>
+      <div id="libList" class="lib-list"></div>
+      <p class="lib-note">
+        활동지를 만들거나 고칠 때마다 여기에 자동으로 저장됩니다. 보관함은 <b>이 브라우저</b>에만 있습니다(서버로 가지 않습니다) —
+        다른 PC 에서도 쓰려면 [JSON] 이나 [전체 백업]으로 내려받아 두세요. 브라우저 데이터를 지우면 함께 지워집니다.
+      </p>
     </div>
   </div>
 </div>
@@ -4586,226 +4644,34 @@ class ValidateWorksheet {
 return { MIN_ANSWER_LEN, SLICE_LEN, ValidateWorksheet };
 });
 
-__wsgDef("src/usecases/zipWriter.js", function (__wsgReq) {
-// zipWriter — 의존성 0 의 최소 ZIP 라이터(저장 방식, 무압축). 순수 함수(FS/DOM 무접촉).
-//
-// DOCX(OOXML)·HWPX 는 ZIP 컨테이너다. 브라우저에는 ZIP 라이터가 없고, 이 프로젝트는 외부 의존성을
-// 두지 않는다. 그래서 필요한 최소만 직접 쓴다 — 항목마다 CRC-32 를 계산해 저장(method 0)으로 담는다.
-// 압축을 하지 않는 이유: 활동지 XML 은 수십 KB 라 압축 없이도 작고, 압축은 CompressionStream 같은
-// 플랫폼 API 나 라이브러리를 끌어들인다. 워드·한글은 저장 방식 항목을 문제없이 연다.
-//
-// 결정적 산출물: 날짜·시간을 고정값으로 쓴다(같은 입력 → 같은 바이트, 프로젝트 관례).
-
-const CRC_TABLE = (() => {
-  const table = new Uint32Array(256);
-  for (let n = 0; n < 256; n++) {
-    let c = n;
-    for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
-    table[n] = c >>> 0;
-  }
-  return table;
-})();
-
-/** @param {Uint8Array} bytes @returns {number} */
-function crc32(bytes) {
-  let c = 0xFFFFFFFF;
-  for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
-  return (c ^ 0xFFFFFFFF) >>> 0;
-}
-
-const encoder = new TextEncoder();
-/** 문자열이면 UTF-8 로, Uint8Array 면 그대로. */
-function toBytes(data) {
-  return typeof data === 'string' ? encoder.encode(data) : data;
-}
-
-// DOS 시간/날짜(고정: 2026-01-01 00:00) — 결정적 산출물.
-const DOS_TIME = 0;
-const DOS_DATE = ((2026 - 1980) << 9) | (1 << 5) | 1;
-
-function u16(view, off, v) { view.setUint16(off, v, true); }
-function u32(view, off, v) { view.setUint32(off, v >>> 0, true); }
-
-/**
- * @param {Array<{name:string, data:string|Uint8Array}>} entries 항목 순서 그대로 기록한다
- *   (OOXML 은 `[Content_Types].xml` 이 첫 항목인 것이 관례다 — 호출부가 순서를 정한다).
- * @returns {Uint8Array} ZIP 바이트
- */
-function writeZip(entries) {
-  if (!Array.isArray(entries)) throw new TypeError('writeZip 은 entries 배열이 필요합니다.');
-  const locals = [];
-  const centrals = [];
-  let offset = 0;
-
-  for (const entry of entries) {
-    if (!entry || typeof entry.name !== 'string' || !entry.name) throw new TypeError('ZIP 항목에는 name 이 필요합니다.');
-    const name = encoder.encode(entry.name);
-    const data = toBytes(entry.data ?? '');
-    const crc = crc32(data);
-
-    const local = new Uint8Array(30 + name.length);
-    const lv = new DataView(local.buffer);
-    u32(lv, 0, 0x04034B50);   // local file header
-    u16(lv, 4, 20);           // version needed
-    u16(lv, 6, 0x0800);       // flags: UTF-8 names
-    u16(lv, 8, 0);            // method: stored
-    u16(lv, 10, DOS_TIME);
-    u16(lv, 12, DOS_DATE);
-    u32(lv, 14, crc);
-    u32(lv, 18, data.length);
-    u32(lv, 22, data.length);
-    u16(lv, 26, name.length);
-    u16(lv, 28, 0);
-    local.set(name, 30);
-
-    const central = new Uint8Array(46 + name.length);
-    const cv = new DataView(central.buffer);
-    u32(cv, 0, 0x02014B50);   // central directory header
-    u16(cv, 4, 20);           // version made by
-    u16(cv, 6, 20);           // version needed
-    u16(cv, 8, 0x0800);
-    u16(cv, 10, 0);
-    u16(cv, 12, DOS_TIME);
-    u16(cv, 14, DOS_DATE);
-    u32(cv, 16, crc);
-    u32(cv, 20, data.length);
-    u32(cv, 24, data.length);
-    u16(cv, 28, name.length);
-    u16(cv, 30, 0);           // extra
-    u16(cv, 32, 0);           // comment
-    u16(cv, 34, 0);           // disk
-    u16(cv, 36, 0);           // internal attrs
-    u32(cv, 38, 0);           // external attrs
-    u32(cv, 42, offset);      // local header offset
-    central.set(name, 46);
-
-    locals.push(local, data);
-    centrals.push(central);
-    offset += local.length + data.length;
-  }
-
-  const cdSize = centrals.reduce((n, c) => n + c.length, 0);
-  const eocd = new Uint8Array(22);
-  const ev = new DataView(eocd.buffer);
-  u32(ev, 0, 0x06054B50);
-  u16(ev, 4, 0);
-  u16(ev, 6, 0);
-  u16(ev, 8, entries.length);
-  u16(ev, 10, entries.length);
-  u32(ev, 12, cdSize);
-  u32(ev, 16, offset);
-  u16(ev, 20, 0);
-
-  const total = offset + cdSize + eocd.length;
-  const out = new Uint8Array(total);
-  let pos = 0;
-  for (const part of [...locals, ...centrals, eocd]) { out.set(part, pos); pos += part.length; }
-  return out;
-}
-
-return { crc32, writeZip };
-});
-
-__wsgDef("src/usecases/ExportDocx.js", function (__wsgReq) {
-const { writeZip } = __wsgReq("src/usecases/zipWriter.js");
+__wsgDef("src/usecases/editableDoc.js", function (__wsgReq) {
 const { resolvePaper, paperDims, paperMargins } = __wsgReq("src/usecases/paper.js");
 
-// ExportDocx — 개체 트리 문서를 **편집용 DOCX**(WordprocessingML)로 다시 그린다. 순수 함수.
+// editableDoc — 개체 트리를 **편집용 문서 모델**(문단·표·런)로 옮기는 단일 지점. 순수 함수.
 //
-// 목적은 "한글·워드에서 문항을 고치는 것"이다. 인쇄 조판의 복제가 아니다 — 쪽 나눔은 워드가 다시
-// 계산하고, 상자는 표로, 답란은 밑줄 문단으로, 수식은 읽을 수 있는 평문 근사(위·아래 첨자 런)로
-// 옮긴다. 정답 제거는 여기서 하지 않는다: 호출부가 BuildVariants.stripAnswersFromDocument 로 만든
-// 학생 벌 트리를 넘긴다(불변식은 한 곳에서만 지킨다).
+// DOCX(OOXML)와 HWPX(OWPML)는 서로 다른 XML 이지만 "활동지를 어떤 문단·표로 옮기느냐"는 같아야
+// 한다 — 상자는 표로, 답란은 밑줄 문단으로, 수식은 읽을 수 있는 평문 근사로. 그 결정을 형식마다
+// 따로 쓰면 두 문서가 다른 활동지가 된다. 그래서 개체 → 모델 변환은 여기 한 번만 있고,
+// ExportDocx / ExportHwpx 는 모델을 각자의 XML 로 직렬화만 한다.
 //
-// 의존성 0: OOXML 을 직접 쓰고 zipWriter 로 담는다. 외부 라이브러리를 번들에 넣지 않는다.
+// 단위는 **포인트(pt)** 하나로 통일한다(DOCX 는 twips=pt×20, HWPX 는 HWPUNIT=pt×100 으로 환산).
 //
-// 못 옮기는 것(정직하게 문서 맨 위 안내로 남긴다): 조직자 SVG(자리 표시), 절대배치(float) 개체,
-// 변환하지 못한 LaTeX 명령(원문 그대로 남김).
+// 정답 제거는 여기서 하지 않는다: 호출부가 BuildVariants.stripAnswersFromDocument 로 만든 학생 벌
+// 트리를 넘긴다(불변식은 한 곳에서만 지킨다).
+//
+// 모델:
+//   Run        {text, b?, i?, u?, sup?, sub?, color?(hex6), size?(pt), shade?(hex6)} | {br:true}
+//   Paragraph  {kind:'p', runs:Run[], align?, before?, after?(pt), line?(배수 1=한 줄), border?{color,widthPt,sides},
+//               shade?(hex6), indent?(pt), keepNext?, pageBreakBefore?}
+//   Table      {kind:'table', rows:Cell[][], widths:number[](pt), borders:boolean, borderColor, cellMargin(pt), indent?(pt)}
+//   Cell       {blocks:Block[], width(pt), shade?, span?, vAlign?('top'|'center'), minHeight?(pt)}
 
-const W_NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
-const R_NS = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
-const FONT = '맑은 고딕';
-const TWIPS_PER_MM = 1440 / 25.4;
-
-// ── XML 유틸 ────────────────────────────────────────────────────────────────
-function xmlEsc(s) {
-  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-const twips = (mm) => Math.round(mm * TWIPS_PER_MM);
-const hex = (c) => String(c || '').replace('#', '').toUpperCase();
-
-// ── 런(글자 묶음) ──────────────────────────────────────────────────────────
-/** @typedef {{text:string, b?:boolean, i?:boolean, u?:boolean, sup?:boolean, sub?:boolean, color?:string, size?:number}} Run */
-
-function runXml(r) {
-  if (r.br) return '<w:r><w:br/></w:r>';
-  const props = [];
-  props.push(`<w:rFonts w:ascii="${FONT}" w:eastAsia="${FONT}" w:hAnsi="${FONT}"/>`);
-  if (r.b) props.push('<w:b/>');
-  if (r.i) props.push('<w:i/>');
-  if (r.u) props.push('<w:u w:val="single"/>');
-  if (r.color) props.push(`<w:color w:val="${hex(r.color)}"/>`);
-  if (r.size) props.push(`<w:sz w:val="${r.size}"/><w:szCs w:val="${r.size}"/>`);
-  if (r.sup) props.push('<w:vertAlign w:val="superscript"/>');
-  if (r.sub) props.push('<w:vertAlign w:val="subscript"/>');
-  if (r.shade) props.push(`<w:shd w:val="clear" w:color="auto" w:fill="${hex(r.shade)}"/>`);
-  return `<w:r><w:rPr>${props.join('')}</w:rPr><w:t xml:space="preserve">${xmlEsc(r.text)}</w:t></w:r>`;
-}
-
-/**
- * 문단. opts: align(left|center|right), before/after(twips), line(줄간격 240=1줄), border({color,sz}),
- * shade(hex), indent(twips), keepNext, pageBreakBefore
- */
-function pXml(runs, opts = {}) {
-  const pr = [];
-  if (opts.keepNext) pr.push('<w:keepNext/>');
-  if (opts.pageBreakBefore) pr.push('<w:pageBreakBefore/>');
-  if (opts.border) {
-    const { color = 'AAAAAA', sz = 4, sides = ['bottom'] } = opts.border;
-    pr.push('<w:pBdr>' + sides.map((s) => `<w:${s} w:val="single" w:sz="${sz}" w:space="1" w:color="${hex(color)}"/>`).join('') + '</w:pBdr>');
-  }
-  if (opts.shade) pr.push(`<w:shd w:val="clear" w:color="auto" w:fill="${hex(opts.shade)}"/>`);
-  const spacing = [];
-  if (opts.before != null) spacing.push(`w:before="${opts.before}"`);
-  if (opts.after != null) spacing.push(`w:after="${opts.after}"`);
-  if (opts.line != null) spacing.push(`w:line="${opts.line}" w:lineRule="auto"`);
-  if (spacing.length) pr.push(`<w:spacing ${spacing.join(' ')}/>`);
-  if (opts.indent) pr.push(`<w:ind w:left="${opts.indent}"/>`);
-  if (opts.align) pr.push(`<w:jc w:val="${opts.align}"/>`);
-  const body = (runs || []).map(runXml).join('');
-  return `<w:p>${pr.length ? `<w:pPr>${pr.join('')}</w:pPr>` : ''}${body}</w:p>`;
-}
-
-/** 표. rows: Array<Array<{content:string(XML 블록들), shade?:hex, width?:twips, span?:number}>> */
-function tblXml(rows, opts = {}) {
-  const { widths = null, borders = true, borderColor = 'CBD5C0', cellMargin = 100, indent = 0 } = opts;
-  const bdr = borders
-    ? ['top', 'left', 'bottom', 'right', 'insideH', 'insideV'].map((s) => `<w:${s} w:val="single" w:sz="6" w:space="0" w:color="${hex(borderColor)}"/>`).join('')
-    : ['top', 'left', 'bottom', 'right', 'insideH', 'insideV'].map((s) => `<w:${s} w:val="nil"/>`).join('');
-  const grid = widths ? `<w:tblGrid>${widths.map((w) => `<w:gridCol w:w="${w}"/>`).join('')}</w:tblGrid>` : '';
-  const trs = rows.map((cells) => {
-    const tcs = cells.map((c) => {
-      const pr = [];
-      if (c.width) pr.push(`<w:tcW w:w="${c.width}" w:type="dxa"/>`);
-      if (c.span && c.span > 1) pr.push(`<w:gridSpan w:val="${c.span}"/>`);
-      if (c.shade) pr.push(`<w:shd w:val="clear" w:color="auto" w:fill="${hex(c.shade)}"/>`);
-      if (c.vAlign) pr.push(`<w:vAlign w:val="${c.vAlign}"/>`);
-      // 셀은 반드시 문단으로 끝나야 한다(중첩 표 뒤에 빈 문단을 붙인다).
-      const content = c.content && c.content.trim() ? c.content : '<w:p/>';
-      const ending = content.endsWith('</w:tbl>') ? content + '<w:p/>' : content;
-      return `<w:tc><w:tcPr>${pr.join('')}</w:tcPr>${ending}</w:tc>`;
-    }).join('');
-    const trPr = cells.some((c) => c.minHeight) ? `<w:trPr><w:trHeight w:val="${Math.max(...cells.map((c) => c.minHeight || 0))}"/></w:trPr>` : '';
-    return `<w:tr>${trPr}${tcs}</w:tr>`;
-  }).join('');
-  return `<w:tbl><w:tblPr><w:tblW w:w="0" w:type="auto"/>${indent ? `<w:tblInd w:w="${indent}" w:type="dxa"/>` : ''}`
-    + `<w:tblBorders>${bdr}</w:tblBorders><w:tblLayout w:type="fixed"/>`
-    + `<w:tblCellMar><w:top w:w="${cellMargin}" w:type="dxa"/><w:left w:w="${cellMargin + 40}" w:type="dxa"/><w:bottom w:w="${cellMargin}" w:type="dxa"/><w:right w:w="${cellMargin + 40}" w:type="dxa"/></w:tblCellMar>`
-    + `<w:tblLook w:val="0000"/></w:tblPr>${grid}${trs}</w:tbl>`;
-}
+const PT_PER_MM = 72 / 25.4;
+const ptFromMm = (mm) => mm * PT_PER_MM;
+const hex6 = (c) => String(c || '').replace('#', '').toUpperCase();
 
 // ── LaTeX → 읽을 수 있는 평문 런(근사) ──────────────────────────────────────
-// 워드의 OMML 로 완전 변환하는 대신, 중·고교 수식의 대부분(첨자·분수·근호·기호)을 사람이 읽고
+// 완전한 수식 객체로 변환하는 대신, 중·고교 수식의 대부분(첨자·분수·근호·기호)을 사람이 읽고
 // 고칠 수 있는 형태로 옮긴다. 모르는 명령은 원문을 남기고 count 로 보고한다.
 const SYMBOLS = {
   pm: '±', mp: '∓', times: '×', cdot: '·', div: '÷', le: '≤', leq: '≤', ge: '≥', geq: '≥', ne: '≠', neq: '≠',
@@ -4952,9 +4818,9 @@ function blockHtmlToParagraphs(html, stats) {
   const out = [];
   // 블록 경계에서 나눈다 — 태그는 남겨 인라인 처리기에 넘긴다.
   const chunks = String(html)
-    .replace(/<\s*(p|div|li|h[1-6]|tr|dt|dd|blockquote|pre)\b[^>]*>/gi, ' $&')
-    .replace(/<\/\s*(p|div|li|h[1-6]|tr|dt|dd|blockquote|pre|ul|ol|table|thead|tbody)\s*>/gi, '$& ')
-    .split(' ');
+    .replace(/<\s*(p|div|li|h[1-6]|tr|dt|dd|blockquote|pre)\b[^>]*>/gi, '\u0000$&')
+    .replace(/<\/\s*(p|div|li|h[1-6]|tr|dt|dd|blockquote|pre|ul|ol|table|thead|tbody)\s*>/gi, '$&\u0000')
+    .split('\u0000'); // 본문에 나올 수 없는 구분자 — 공백으로 자르면 낱말이 문단으로 쪼개진다
   for (const raw of chunks) {
     const isLi = /^<\s*li\b/i.test(raw);
     const isCell = /<\s*t[dh]\b/i.test(raw);
@@ -4969,7 +4835,23 @@ function blockHtmlToParagraphs(html, stats) {
   return out;
 }
 
-// ── 개체 → OOXML 블록 ───────────────────────────────────────────────────────
+// ── 모델 생성자 ─────────────────────────────────────────────────────────────
+/** 문단. 단위 pt: before/after/indent, line 은 배수(1=한 줄), border.widthPt. */
+function P(runs, opts = {}) {
+  return { kind: 'p', runs: runs || [], ...opts };
+}
+/** 표. rows: Cell[][], widths(pt). borders=false 면 선 없음. */
+function T(rows, opts = {}) {
+  const { widths = null, borders = true, borderColor = 'CBD5C0', cellMargin = 5, indent = 0 } = opts;
+  return { kind: 'table', rows, widths, borders, borderColor, cellMargin, indent };
+}
+
+/** 표 셀 내용은 반드시 블록으로 끝나야 한다 — 비면 빈 문단 하나. */
+function ensureBlocks(blocks) {
+  return blocks && blocks.length ? blocks : [P([])];
+}
+
+// ── 개체 → 모델 ───────────────────────────────────────────────────────────
 const CIRCLED = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩'];
 const CALLOUT_LABELS = { tip: '도움말', warning: '주의', note: '참고', summary: '핵심 정리' };
 
@@ -4979,66 +4861,61 @@ function cellText(x) {
   return typeof x.text === 'string' ? x.text : (typeof x.label === 'string' ? x.label : '');
 }
 
-class ExportDocx {
-  /**
-   * @param {object} document 개체 트리(학생 벌이면 이미 정답이 제거된 트리)
-   * @param {{mode?:'student'|'teacher', themeCss?:string, standards?:Array<{code,text}>}} opts
-   * @returns {{bytes:Uint8Array, notes:string[]}}
-   */
-  execute(document, opts = {}) {
-    if (!document || typeof document !== 'object') throw new TypeError('ExportDocx.execute 는 개체 트리 문서가 필요합니다.');
-    const mode = opts.mode === 'teacher' ? 'teacher' : 'student';
-    const theme = parseTheme(opts.themeCss || '');
-    const stats = { unknown: 0, organizers: 0, floats: 0 };
-    const ctx = { theme, mode, stats, section: 0, contentWidth: 0, standards: new Map((opts.standards || document.standards || []).map((s) => [String(s.code).replace(/^\[|\]$/g, ''), s.text])) };
-
-    const paper = resolvePaper(document.paper ?? null);
-    const dims = paperDims(paper);
-    const margins = paperMargins(paper);
-    ctx.contentWidth = twips(dims.w - margins.left - margins.right);
-
-    const blocks = [];
-    // 모드 표식 + 머리글 한 줄(워드 머리글 파트 대신 본문 첫 줄 — 편집용이라 충분하다)
-    blocks.push(pXml([
-      { text: mode === 'teacher' ? '교사용 (정답 포함)' : '학생용', b: true, color: theme.c, size: 18 },
-      { text: document.runHead ? '    ' + document.runHead : '', color: '888888', size: 16 },
-    ], { after: 60 }));
-
-    const pages = Array.isArray(document.pages) ? document.pages : [];
-    for (const page of pages) {
-      for (const obj of (page.flow || [])) blocks.push(...renderObject(obj, ctx));
-      if ((page.float || []).length) stats.floats += page.float.length;
-    }
-
-    const notes = [];
-    if (stats.unknown) notes.push(`수식 명령 ${stats.unknown}개는 변환하지 못해 LaTeX 원문 그대로 남겼습니다.`);
-    if (stats.organizers) notes.push(`그림형 조직자 ${stats.organizers}개는 워드에서 자리 표시로만 나옵니다.`);
-    if (stats.floats) notes.push(`자유 배치(float) 개체 ${stats.floats}개는 편집용 문서에 넣지 않았습니다.`);
-
-    const sectPr = `<w:sectPr><w:pgSz w:w="${twips(dims.w)}" w:h="${twips(dims.h)}"${paper.orientation === 'landscape' ? ' w:orient="landscape"' : ''}/>`
-      + `<w:pgMar w:top="${twips(margins.top)}" w:right="${twips(margins.right)}" w:bottom="${twips(margins.bottom)}" w:left="${twips(margins.left)}" w:header="400" w:footer="400" w:gutter="0"/></w:sectPr>`;
-
-    const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n`
-      + `<w:document xmlns:w="${W_NS}" xmlns:r="${R_NS}"><w:body>${blocks.join('')}${sectPr}</w:body></w:document>`;
-
-    const bytes = writeZip([
-      { name: '[Content_Types].xml', data: CONTENT_TYPES },
-      { name: '_rels/.rels', data: ROOT_RELS },
-      { name: 'word/_rels/document.xml.rels', data: DOC_RELS },
-      { name: 'word/document.xml', data: documentXml },
-      { name: 'word/styles.xml', data: stylesXml(theme) },
-      { name: 'docProps/core.xml', data: coreXml(document.docTitle || '활동지') },
-    ]);
-    return { bytes, notes };
-  }
-}
-
+/** 테마 CSS(--c, --c2, --clite, --cink, --clabel)에서 교과색을 읽는다. 없으면 파란 계열 기본값. */
 function parseTheme(css) {
   const pick = (name, fallback) => {
-    const m = new RegExp(`--${name}:\\s*#([0-9a-fA-F]{6})`).exec(css);
+    const m = new RegExp(`--${name}:\\s*#([0-9a-fA-F]{6})`).exec(css || '');
     return m ? m[1].toUpperCase() : fallback;
   };
   return { c: pick('c', '1565C0'), c2: pick('c2', '1E88E5'), clite: pick('clite', 'E8F1FB'), cink: pick('cink', '0D47A1'), clabel: pick('clabel', 'BBDEFB') };
+}
+
+/**
+ * @param {object} document 개체 트리(학생 벌이면 이미 정답이 제거된 트리)
+ * @param {{mode?:'student'|'teacher', themeCss?:string, standards?:Array<{code,text}>}} opts
+ * @returns {{blocks:Block[], notes:string[], theme:object, mode:string, title:string,
+ *   page:{widthPt:number, heightPt:number, landscape:boolean, margins:{top,right,bottom,left}(pt), contentWidthPt:number}}}
+ */
+function buildEditableDoc(document, opts = {}) {
+  if (!document || typeof document !== 'object') throw new TypeError('buildEditableDoc 은 개체 트리 문서가 필요합니다.');
+  const mode = opts.mode === 'teacher' ? 'teacher' : 'student';
+  const theme = parseTheme(opts.themeCss || '');
+  const stats = { unknown: 0, organizers: 0, floats: 0 };
+
+  // paper 미지정은 A4 세로 기본과 같다(resolvePaper(null) 은 "주입 0" 을 뜻하는 null 을 준다).
+  const paper = resolvePaper(document.paper ?? null) || resolvePaper({});
+  const dims = paperDims(paper);
+  const margins = paperMargins(paper);
+  const page = {
+    widthPt: ptFromMm(dims.w), heightPt: ptFromMm(dims.h), landscape: paper.orientation === 'landscape',
+    margins: { top: ptFromMm(margins.top), right: ptFromMm(margins.right), bottom: ptFromMm(margins.bottom), left: ptFromMm(margins.left) },
+    contentWidthPt: ptFromMm(dims.w - margins.left - margins.right),
+  };
+
+  const ctx = {
+    theme, mode, stats, section: 0, contentWidth: page.contentWidthPt,
+    standards: new Map((opts.standards || document.standards || []).map((s) => [String(s.code).replace(/^\[|\]$/g, ''), s.text])),
+  };
+
+  const blocks = [];
+  // 모드 표식 + 머리글 한 줄(머리글 파트 대신 본문 첫 줄 — 편집용이라 충분하다)
+  blocks.push(P([
+    { text: mode === 'teacher' ? '교사용 (정답 포함)' : '학생용', b: true, color: theme.c, size: 9 },
+    { text: document.runHead ? '    ' + document.runHead : '', color: '888888', size: 8 },
+  ], { after: 3 }));
+
+  const pages = Array.isArray(document.pages) ? document.pages : [];
+  for (const pg of pages) {
+    for (const obj of (pg.flow || [])) blocks.push(...renderObject(obj, ctx));
+    if ((pg.float || []).length) stats.floats += pg.float.length;
+  }
+
+  const notes = [];
+  if (stats.unknown) notes.push(`수식 명령 ${stats.unknown}개는 변환하지 못해 LaTeX 원문 그대로 남겼습니다.`);
+  if (stats.organizers) notes.push(`그림형 조직자 ${stats.organizers}개는 편집용 문서에서 자리 표시로만 나옵니다.`);
+  if (stats.floats) notes.push(`자유 배치(float) 개체 ${stats.floats}개는 편집용 문서에 넣지 않았습니다.`);
+
+  return { blocks, notes, theme, mode, page, title: String(document.docTitle || '활동지') };
 }
 
 function renderObject(obj, ctx) {
@@ -5051,15 +4928,15 @@ function renderObject(obj, ctx) {
     case 'question': return renderQuestion(obj, ctx);
     case 'table': return renderTable(obj, ctx);
     case 'answer-area': return renderAnswerArea(obj, ctx);
-    case 'divider': return [pXml([], { border: { color: 'BBBBBB', sz: 6 }, before: 80, after: 120 })];
-    case 'image-slot': return [boxTable(ctx, [pXml([{ text: '[그림 자리] ' + (obj.alt || obj.caption || ''), color: '888888', size: 18 }], { align: 'center', before: 200, after: 200 })], { border: 'BBBBBB' })];
+    case 'divider': return [P([], { border: { color: 'BBBBBB', widthPt: 0.75 }, before: 4, after: 6 })];
+    case 'image-slot': return [...boxTable(ctx, [P([{ text: '[그림 자리] ' + (obj.alt || obj.caption || ''), color: '888888', size: 9 }], { align: 'center', before: 10, after: 10 })], { border: 'BBBBBB' })];
     case 'passage-slot': return renderPassage(obj, ctx);
-    case 'organizer': ctx.stats.organizers++; return [boxTable(ctx, [pXml([{ text: `[${organizerName(obj.kind)} 자리 — 인쇄판(PDF)에서 그림으로 나옵니다]`, color: '888888', size: 18 }], { align: 'center', before: 300, after: 300 })], { border: 'BBBBBB' })];
+    case 'organizer': ctx.stats.organizers++; return [...boxTable(ctx, [P([{ text: `[${organizerName(obj.kind)} 자리 — 인쇄판(PDF)에서 그림으로 나옵니다]`, color: '888888', size: 9 }], { align: 'center', before: 15, after: 15 })], { border: 'BBBBBB' })];
     case 'columns': return renderColumns(obj, ctx);
-    case 'spacer': return [pXml([], { before: twips(Number(obj.heightMm) || 5) })];
-    case 'page-break': return [pXml([], { pageBreakBefore: true })];
+    case 'spacer': return [P([], { before: ptFromMm(Number(obj.heightMm) || 5) })];
+    case 'page-break': return [P([], { pageBreakBefore: true })];
     case 'shape': return [];
-    default: return [pXml([{ text: `[${obj.type}]`, color: '888888' }])];
+    default: return [P([{ text: `[${obj.type}]`, color: '888888' }])];
   }
 }
 
@@ -5067,12 +4944,12 @@ function organizerName(kind) {
   return { venn: '벤다이어그램', conceptmap: '개념 지도', fishbone: '피시본', flowchart: '순서 흐름도', hierarchy: '위계 트리', hexagon: '헥사곤' }[kind] || '조직자';
 }
 
-/** 1×1 표로 상자를 만든다(.qbox/.callout/.std-box 의 워드 대응 — 편집이 자연스럽다). */
+/** 1×1 표로 상자를 만든다(.qbox/.callout/.std-box 의 대응 — 편집이 자연스럽다). 뒤에 여백 문단 하나. */
 function boxTable(ctx, contentBlocks, { shade, border = 'CBD5C0', header } = {}) {
   const rows = [];
-  if (header) rows.push([{ content: header.content, shade: header.shade, width: ctx.contentWidth }]);
-  rows.push([{ content: contentBlocks.join(''), shade, width: ctx.contentWidth }]);
-  return tblXml(rows, { widths: [ctx.contentWidth], borderColor: border }) + pXml([], { after: 40 });
+  if (header) rows.push([{ blocks: ensureBlocks(header.blocks), shade: header.shade, width: ctx.contentWidth }]);
+  rows.push([{ blocks: ensureBlocks(contentBlocks), shade, width: ctx.contentWidth }]);
+  return [T(rows, { widths: [ctx.contentWidth], borderColor: border }), P([], { after: 2 })];
 }
 
 function renderTitle(obj, ctx) {
@@ -5080,17 +4957,17 @@ function renderTitle(obj, ctx) {
   const inner = typeof obj.textHtml === 'string' && obj.textHtml ? inlineHtmlToRuns(obj.textHtml, stats) : [{ text: String(obj.text ?? '') }];
   if (obj.level === 2) {
     ctx.section += 1;
-    return [pXml([{ text: `${ctx.section}. `, b: true, color: ctx.theme.c, size: 24 }, ...inner.map((r) => ({ ...r, b: true, size: 24 }))], { before: 240, after: 80, keepNext: true })];
+    return [P([{ text: `${ctx.section}. `, b: true, color: ctx.theme.c, size: 12 }, ...inner.map((r) => ({ ...r, b: true, size: 12 }))], { before: 12, after: 4, keepNext: true })];
   }
   const out = [];
   const meta = obj.meta || {};
   const metaRuns = [];
-  if (meta.pill) metaRuns.push({ text: ` ${meta.pill} `, b: true, color: 'FFFFFF', size: 18, shade: ctx.theme.c });
-  if (meta.page) metaRuns.push({ text: (metaRuns.length ? '    ' : '') + meta.page, color: '555555', size: 17 });
-  if (metaRuns.length) out.push(pXml(metaRuns, { after: 60 }));
-  out.push(tblXml([[{ content: pXml(inner.map((r) => ({ ...r, b: true, size: 40, color: ctx.theme.cink })), { align: 'center', before: 120, after: 120 }), shade: ctx.theme.clite, width: ctx.contentWidth }]], { widths: [ctx.contentWidth], borderColor: ctx.theme.c2 }));
-  if (meta.source) out.push(pXml([{ text: meta.source, color: '666666', size: 17 }], { align: 'right', after: 60 }));
-  out.push(pXml([], { after: 80 }));
+  if (meta.pill) metaRuns.push({ text: ` ${meta.pill} `, b: true, color: 'FFFFFF', size: 9, shade: ctx.theme.c });
+  if (meta.page) metaRuns.push({ text: (metaRuns.length ? '    ' : '') + meta.page, color: '555555', size: 8.5 });
+  if (metaRuns.length) out.push(P(metaRuns, { after: 3 }));
+  out.push(T([[{ blocks: [P(inner.map((r) => ({ ...r, b: true, size: 20, color: ctx.theme.cink })), { align: 'center', before: 6, after: 6 })], shade: ctx.theme.clite, width: ctx.contentWidth }]], { widths: [ctx.contentWidth], borderColor: ctx.theme.c2 }));
+  if (meta.source) out.push(P([{ text: meta.source, color: '666666', size: 8.5 }], { align: 'right', after: 3 }));
+  out.push(P([], { after: 4 }));
   return out;
 }
 
@@ -5099,103 +4976,106 @@ function renderRichtext(obj, ctx) {
   // 이름칸 관용구 — 표 2열로
   if (/class=['"]unit-line['"]/.test(html)) {
     const unit = (/<div class=['"]unit['"]>([\s\S]*?)<\/div>/.exec(html) || [])[1] || '';
-    return [tblXml([[
-      { content: pXml(inlineHtmlToRuns(unit, ctx.stats, { size: 19 })), width: Math.round(ctx.contentWidth * 0.6) },
-      { content: pXml([{ text: '학년 ______  반 ______  이름 ____________', size: 19, color: '444444' }], { align: 'right' }), width: Math.round(ctx.contentWidth * 0.4) },
-    ]], { widths: [Math.round(ctx.contentWidth * 0.6), Math.round(ctx.contentWidth * 0.4)], borders: false }), pXml([], { after: 40 })];
+    const w1 = Math.round(ctx.contentWidth * 0.6 * 20) / 20; // twips 정수와 같은 눈금
+    const w2 = Math.round(ctx.contentWidth * 0.4 * 20) / 20;
+    return [T([[
+      { blocks: [P(inlineHtmlToRuns(unit, ctx.stats, { size: 9.5 }))], width: w1 },
+      { blocks: [P([{ text: '학년 ______  반 ______  이름 ____________', size: 9.5, color: '444444' }], { align: 'right' })], width: w2 },
+    ]], { widths: [w1, w2], borders: false }), P([], { after: 2 })];
   }
   if (/class=['"]direct['"]/.test(html)) {
-    const runs = inlineHtmlToRuns(html, ctx.stats, { b: true, size: 22 });
-    return [pXml([{ text: '◐ ', color: ctx.theme.c, b: true, size: 22 }, ...runs], { before: 200, after: 120 })];
+    const runs = inlineHtmlToRuns(html, ctx.stats, { b: true, size: 11 });
+    return [P([{ text: '◐ ', color: ctx.theme.c, b: true, size: 11 }, ...runs], { before: 10, after: 6 })];
   }
   const paras = blockHtmlToParagraphs(html, ctx.stats);
-  return paras.map((runs) => pXml(runs, { after: 60 }));
+  return paras.map((runs) => P(runs, { after: 3 }));
 }
 
 function renderStdBox(obj, ctx) {
   const heading = obj.heading || '학습 목표';
   const body = [];
-  for (const o of (obj.objectives || [])) body.push(pXml([{ text: '• ' }, ...inlineHtmlToRuns(String(o), ctx.stats)], { after: 40 }));
+  for (const o of (obj.objectives || [])) body.push(P([{ text: '• ' }, ...inlineHtmlToRuns(String(o), ctx.stats)], { after: 2 }));
   if (obj.showStandards && Array.isArray(obj.codes) && obj.codes.length) {
     for (const code of obj.codes) {
       const text = ctx.standards.get(String(code).replace(/^\[|\]$/g, ''));
-      body.push(pXml([{ text: `${code} `, b: true, color: '666666', size: 17 }, { text: text || '', color: '666666', size: 17 }], { after: 30 }));
+      body.push(P([{ text: `${code} `, b: true, color: '666666', size: 8.5 }, { text: text || '', color: '666666', size: 8.5 }], { after: 1.5 }));
     }
   }
-  if (!body.length) body.push(pXml([]));
-  return [boxTable(ctx, body, { header: { content: pXml([{ text: '▣ ' + heading, b: true, color: ctx.theme.cink, size: 19 }]), shade: ctx.theme.clite } })];
+  return boxTable(ctx, body, { header: { blocks: [P([{ text: '▣ ' + heading, b: true, color: ctx.theme.cink, size: 9.5 }])], shade: ctx.theme.clite } });
 }
 
 function renderCallout(obj, ctx) {
-  const label = obj.titleHtml ? inlineHtmlToRuns(obj.titleHtml, ctx.stats, { b: true, color: ctx.theme.cink, size: 19 })
-    : [{ text: obj.title || CALLOUT_LABELS[obj.variant] || '참고', b: true, color: ctx.theme.cink, size: 19 }];
-  const body = blockHtmlToParagraphs(String(obj.body || ''), ctx.stats).map((runs) => pXml(runs, { after: 50 }));
-  if (!body.length) body.push(pXml([]));
-  return [boxTable(ctx, body, { header: { content: pXml(label), shade: ctx.theme.clite }, border: ctx.theme.c2 })];
+  const label = obj.titleHtml ? inlineHtmlToRuns(obj.titleHtml, ctx.stats, { b: true, color: ctx.theme.cink, size: 9.5 })
+    : [{ text: obj.title || CALLOUT_LABELS[obj.variant] || '참고', b: true, color: ctx.theme.cink, size: 9.5 }];
+  const body = blockHtmlToParagraphs(String(obj.body || ''), ctx.stats).map((runs) => P(runs, { after: 2.5 }));
+  return boxTable(ctx, body, { header: { blocks: [P(label)], shade: ctx.theme.clite }, border: ctx.theme.c2 });
 }
 
-function answerLines(n, ctx) {
+/** 답란 — 밑줄 문단 n 개(줄 간격 1.5). */
+function answerLines(n) {
   const out = [];
-  for (let i = 0; i < n; i++) out.push(pXml([{ text: ' ' }], { border: { color: 'BBBBBB', sz: 4 }, line: 360, after: 60 }));
+  for (let i = 0; i < n; i++) out.push(P([{ text: ' ' }], { border: { color: 'BBBBBB', widthPt: 0.5 }, line: 1.5, after: 3 }));
   return out;
 }
 
 function renderQuestion(obj, ctx) {
   const stats = ctx.stats;
-  const qnum = obj.qnum != null ? [{ text: `${CIRCLED[Number(obj.qnum) - 1] || obj.qnum} `, b: true, color: ctx.theme.c, size: 22 }] : [];
+  const qnum = obj.qnum != null ? [{ text: `${CIRCLED[Number(obj.qnum) - 1] || obj.qnum} `, b: true, color: ctx.theme.c, size: 11 }] : [];
   const prompt = typeof obj.promptHtml === 'string' && obj.promptHtml ? inlineHtmlToRuns(obj.promptHtml, stats, { b: true }) : [{ text: String(obj.prompt ?? ''), b: true }];
-  const blocks = [pXml([...qnum, ...prompt], { after: 80 })];
+  const blocks = [P([...qnum, ...prompt], { after: 4 })];
 
   switch (obj.qtype) {
     case 'multiple-choice': {
-      (obj.choices || []).forEach((c, i) => blocks.push(pXml([{ text: `${CIRCLED[i] || (i + 1) + '.'} ` }, ...inlineHtmlToRuns(cellText(c), stats)], { indent: 300, after: 30 })));
+      (obj.choices || []).forEach((c, i) => blocks.push(P([{ text: `${CIRCLED[i] || (i + 1) + '.'} ` }, ...inlineHtmlToRuns(cellText(c), stats)], { indent: 15, after: 1.5 })));
       break;
     }
     case 'true-false': {
       const stmts = obj.choices || [];
-      if (!stmts.length) blocks.push(pXml([{ text: '☐ 참(O)      ☐ 거짓(X)' }], { indent: 300 }));
-      else stmts.forEach((s, i) => blocks.push(pXml([{ text: `${CIRCLED[i] || (i + 1) + '.'} ` }, ...inlineHtmlToRuns(cellText(s), stats), { text: '   ( O / X )' }], { indent: 300, after: 30 })));
+      if (!stmts.length) blocks.push(P([{ text: '☐ 참(O)      ☐ 거짓(X)' }], { indent: 15 }));
+      else stmts.forEach((s, i) => blocks.push(P([{ text: `${CIRCLED[i] || (i + 1) + '.'} ` }, ...inlineHtmlToRuns(cellText(s), stats), { text: '   ( O / X )' }], { indent: 15, after: 1.5 })));
       break;
     }
     case 'matching': {
       const left = obj.left || []; const right = obj.right || [];
       const n = Math.max(left.length, right.length);
+      const wSide = Math.round(ctx.contentWidth * 0.45 * 20) / 20;
+      const wMid = Math.round(ctx.contentWidth * 0.1 * 20) / 20;
       const rows = [];
       for (let i = 0; i < n; i++) {
         rows.push([
-          { content: pXml(inlineHtmlToRuns(cellText(left[i]), stats)), width: Math.round(ctx.contentWidth * 0.45) },
-          { content: pXml([{ text: '•          •' }], { align: 'center' }), width: Math.round(ctx.contentWidth * 0.1) },
-          { content: pXml(inlineHtmlToRuns(cellText(right[i]), stats)), width: Math.round(ctx.contentWidth * 0.45) },
+          { blocks: [P(inlineHtmlToRuns(cellText(left[i]), stats))], width: wSide },
+          { blocks: [P([{ text: '•          •' }], { align: 'center' })], width: wMid },
+          { blocks: [P(inlineHtmlToRuns(cellText(right[i]), stats))], width: wSide },
         ]);
       }
-      if (rows.length) blocks.push(tblXml(rows, { widths: [Math.round(ctx.contentWidth * 0.45), Math.round(ctx.contentWidth * 0.1), Math.round(ctx.contentWidth * 0.45)], borders: false }), pXml([]));
+      if (rows.length) blocks.push(T(rows, { widths: [wSide, wMid, wSide], borders: false }), P([]));
       break;
     }
     case 'ordering': {
-      (obj.items || []).forEach((it) => blocks.push(pXml([{ text: '☐  ' }, ...inlineHtmlToRuns(cellText(it), stats)], { indent: 300, after: 30 })));
+      (obj.items || []).forEach((it) => blocks.push(P([{ text: '☐  ' }, ...inlineHtmlToRuns(cellText(it), stats)], { indent: 15, after: 1.5 })));
       break;
     }
     case 'fill-blank': {
       const bank = obj.choices || [];
-      if (bank.length) blocks.push(pXml([{ text: '낱말 상자: ', b: true, size: 19 }, { text: bank.map(cellText).join('   '), size: 19 }], { indent: 300 }));
+      if (bank.length) blocks.push(P([{ text: '낱말 상자: ', b: true, size: 9.5 }, { text: bank.map(cellText).join('   '), size: 9.5 }], { indent: 15 }));
       break;
     }
     case 'short-answer':
-      blocks.push(...answerLines(1, ctx));
+      blocks.push(...answerLines(1));
       break;
     case 'essay':
     default: {
       if (obj.lines === 0) break;
-      blocks.push(...answerLines(Math.max(1, Number(obj.lines) || 4), ctx));
+      blocks.push(...answerLines(Math.max(1, Number(obj.lines) || 4)));
     }
   }
 
   if (ctx.mode === 'teacher' && obj.answerKey) {
     const ak = obj.answerKey;
     const runs = typeof ak.html === 'string' ? inlineHtmlToRuns(ak.html, stats) : [{ text: String(ak.text ?? '') }];
-    blocks.push(pXml([{ text: '정답  ', b: true, color: ctx.theme.cink, size: 19 }, ...runs.map((r) => ({ ...r, color: r.color || ctx.theme.cink, size: 19 }))], { shade: ctx.theme.clite, before: 80, after: 40 }));
+    blocks.push(P([{ text: '정답  ', b: true, color: ctx.theme.cink, size: 9.5 }, ...runs.map((r) => ({ ...r, color: r.color || ctx.theme.cink, size: 9.5 }))], { shade: ctx.theme.clite, before: 4, after: 2 }));
   }
-  return [boxTable(ctx, blocks, { border: 'CBD5C0' })];
+  return boxTable(ctx, blocks, { border: 'CBD5C0' });
 }
 
 function renderTable(obj, ctx) {
@@ -5207,33 +5087,33 @@ function renderTable(obj, ctx) {
   const widths = [];
   for (let c = 0; c < colCount; c++) {
     const w = hasW && typeof first[c]?.w === 'number' ? first[c].w : 100 / colCount;
-    widths.push(Math.round(ctx.contentWidth * (w / 100)));
+    widths.push(Math.round(ctx.contentWidth * (w / 100) * 20) / 20);
   }
   const out = [];
-  if (obj.caption) out.push(pXml([{ text: String(obj.caption), color: '555555', size: 18 }], { align: 'center', after: 40 }));
+  if (obj.caption) out.push(P([{ text: String(obj.caption), color: '555555', size: 9 }], { align: 'center', after: 2 }));
   const trs = rows.map((row) => (Array.isArray(row) ? row : []).map((cell, c) => ({
-    content: pXml(inlineHtmlToRuns(cellText(cell), ctx.stats, cell?.header ? { b: true, color: ctx.theme.cink } : {}), { align: cell?.align === 'center' || cell?.align === 'right' ? cell.align : undefined }),
+    blocks: [P(inlineHtmlToRuns(cellText(cell), ctx.stats, cell?.header ? { b: true, color: ctx.theme.cink } : {}), { align: cell?.align === 'center' || cell?.align === 'right' ? cell.align : undefined })],
     shade: cell?.header ? ctx.theme.clite : undefined,
     width: widths[c],
-    minHeight: typeof cell?.h === 'number' ? twips(cell.h) : undefined,
+    minHeight: typeof cell?.h === 'number' ? ptFromMm(cell.h) : undefined,
   })));
-  out.push(tblXml(trs, { widths }), pXml([], { after: 60 }));
+  out.push(T(trs, { widths }), P([], { after: 3 }));
   return out;
 }
 
 function renderAnswerArea(obj, ctx) {
   const out = [];
-  if (obj.label) out.push(pXml([{ text: String(obj.label), b: true, size: 19 }], { after: 40 }));
-  if (obj.style === 'box') out.push(boxTable(ctx, [pXml([], { before: 600, after: 600 })], { border: 'BBBBBB' }));
-  else out.push(...answerLines(Math.max(1, Number(obj.lines) || 3), ctx));
+  if (obj.label) out.push(P([{ text: String(obj.label), b: true, size: 9.5 }], { after: 2 }));
+  if (obj.style === 'box') out.push(...boxTable(ctx, [P([], { before: 30, after: 30 })], { border: 'BBBBBB' }));
+  else out.push(...answerLines(Math.max(1, Number(obj.lines) || 3)));
   return out;
 }
 
 function renderPassage(obj, ctx) {
-  const header = pXml([{ text: String(obj.slotLabel || '제시문'), b: true, color: ctx.theme.cink, size: 19 }, { text: obj.title ? '  ' + obj.title : '', b: true, size: 19 }]);
-  const body = obj.bodyHtml ? blockHtmlToParagraphs(String(obj.bodyHtml), ctx.stats).map((r) => pXml(r, { after: 50 })) : [pXml([{ text: '(지문을 여기에 넣으세요)', color: '999999' }], { before: 200, after: 200 })];
-  if (obj.source) body.push(pXml([{ text: '출처: ' + obj.source, color: '666666', size: 17 }], { align: 'right' }));
-  return [boxTable(ctx, body, { header: { content: header, shade: ctx.theme.clite } })];
+  const header = P([{ text: String(obj.slotLabel || '제시문'), b: true, color: ctx.theme.cink, size: 9.5 }, { text: obj.title ? '  ' + obj.title : '', b: true, size: 9.5 }]);
+  const body = obj.bodyHtml ? blockHtmlToParagraphs(String(obj.bodyHtml), ctx.stats).map((r) => P(r, { after: 2.5 })) : [P([{ text: '(지문을 여기에 넣으세요)', color: '999999' }], { before: 10, after: 10 })];
+  if (obj.source) body.push(P([{ text: '출처: ' + obj.source, color: '666666', size: 8.5 }], { align: 'right' }));
+  return boxTable(ctx, body, { header: { blocks: [header], shade: ctx.theme.clite } });
 }
 
 function renderColumns(obj, ctx) {
@@ -5241,15 +5121,270 @@ function renderColumns(obj, ctx) {
   if (!cols.length) return [];
   const ratio = Array.isArray(obj.ratio) && obj.ratio.length === cols.length ? obj.ratio : cols.map(() => 1);
   const sum = ratio.reduce((a, b) => a + Number(b), 0);
-  const widths = ratio.map((r) => Math.round(ctx.contentWidth * (Number(r) / sum)));
+  const widths = ratio.map((r) => Math.round(ctx.contentWidth * (Number(r) / sum) * 20) / 20);
   const subCtx = { ...ctx };
   const cells = cols.map((col, i) => {
-    subCtx.contentWidth = widths[i] - 120;
-    const content = (Array.isArray(col) ? col : []).flatMap((child) => renderObject(child, subCtx)).join('');
-    return { content, width: widths[i], vAlign: 'top' };
+    subCtx.contentWidth = widths[i] - 6;
+    const blocks = (Array.isArray(col) ? col : []).flatMap((child) => renderObject(child, subCtx));
+    return { blocks: ensureBlocks(blocks), width: widths[i], vAlign: 'top' };
   });
   ctx.section = subCtx.section;
-  return [tblXml([cells], { widths, borders: false, cellMargin: 40 }), pXml([], { after: 40 })];
+  return [T([cells], { widths, borders: false, cellMargin: 2 }), P([], { after: 2 })];
+}
+
+return { ptFromMm, hex6, latexToRuns, inlineHtmlToRuns, blockHtmlToParagraphs, P, T, ensureBlocks, parseTheme, buildEditableDoc };
+});
+
+__wsgDef("src/usecases/zipWriter.js", function (__wsgReq) {
+// zipWriter — 의존성 0 의 최소 ZIP 라이터(저장 방식, 무압축). 순수 함수(FS/DOM 무접촉).
+//
+// DOCX(OOXML)·HWPX 는 ZIP 컨테이너다. 브라우저에는 ZIP 라이터가 없고, 이 프로젝트는 외부 의존성을
+// 두지 않는다. 그래서 필요한 최소만 직접 쓴다 — 항목마다 CRC-32 를 계산해 저장(method 0)으로 담는다.
+// 압축을 하지 않는 이유: 활동지 XML 은 수십 KB 라 압축 없이도 작고, 압축은 CompressionStream 같은
+// 플랫폼 API 나 라이브러리를 끌어들인다. 워드·한글은 저장 방식 항목을 문제없이 연다.
+//
+// 결정적 산출물: 날짜·시간을 고정값으로 쓴다(같은 입력 → 같은 바이트, 프로젝트 관례).
+
+const CRC_TABLE = (() => {
+  const table = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    table[n] = c >>> 0;
+  }
+  return table;
+})();
+
+/** @param {Uint8Array} bytes @returns {number} */
+function crc32(bytes) {
+  let c = 0xFFFFFFFF;
+  for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+
+const encoder = new TextEncoder();
+/** 문자열이면 UTF-8 로, Uint8Array 면 그대로. */
+function toBytes(data) {
+  return typeof data === 'string' ? encoder.encode(data) : data;
+}
+
+// DOS 시간/날짜(고정: 2026-01-01 00:00) — 결정적 산출물.
+const DOS_TIME = 0;
+const DOS_DATE = ((2026 - 1980) << 9) | (1 << 5) | 1;
+
+function u16(view, off, v) { view.setUint16(off, v, true); }
+function u32(view, off, v) { view.setUint32(off, v >>> 0, true); }
+
+/**
+ * @param {Array<{name:string, data:string|Uint8Array}>} entries 항목 순서 그대로 기록한다
+ *   (OOXML 은 `[Content_Types].xml` 이 첫 항목인 것이 관례다 — 호출부가 순서를 정한다).
+ * @returns {Uint8Array} ZIP 바이트
+ */
+function writeZip(entries) {
+  if (!Array.isArray(entries)) throw new TypeError('writeZip 은 entries 배열이 필요합니다.');
+  const locals = [];
+  const centrals = [];
+  let offset = 0;
+
+  for (const entry of entries) {
+    if (!entry || typeof entry.name !== 'string' || !entry.name) throw new TypeError('ZIP 항목에는 name 이 필요합니다.');
+    const name = encoder.encode(entry.name);
+    const data = toBytes(entry.data ?? '');
+    const crc = crc32(data);
+
+    const local = new Uint8Array(30 + name.length);
+    const lv = new DataView(local.buffer);
+    u32(lv, 0, 0x04034B50);   // local file header
+    u16(lv, 4, 20);           // version needed
+    u16(lv, 6, 0x0800);       // flags: UTF-8 names
+    u16(lv, 8, 0);            // method: stored
+    u16(lv, 10, DOS_TIME);
+    u16(lv, 12, DOS_DATE);
+    u32(lv, 14, crc);
+    u32(lv, 18, data.length);
+    u32(lv, 22, data.length);
+    u16(lv, 26, name.length);
+    u16(lv, 28, 0);
+    local.set(name, 30);
+
+    const central = new Uint8Array(46 + name.length);
+    const cv = new DataView(central.buffer);
+    u32(cv, 0, 0x02014B50);   // central directory header
+    u16(cv, 4, 20);           // version made by
+    u16(cv, 6, 20);           // version needed
+    u16(cv, 8, 0x0800);
+    u16(cv, 10, 0);
+    u16(cv, 12, DOS_TIME);
+    u16(cv, 14, DOS_DATE);
+    u32(cv, 16, crc);
+    u32(cv, 20, data.length);
+    u32(cv, 24, data.length);
+    u16(cv, 28, name.length);
+    u16(cv, 30, 0);           // extra
+    u16(cv, 32, 0);           // comment
+    u16(cv, 34, 0);           // disk
+    u16(cv, 36, 0);           // internal attrs
+    u32(cv, 38, 0);           // external attrs
+    u32(cv, 42, offset);      // local header offset
+    central.set(name, 46);
+
+    locals.push(local, data);
+    centrals.push(central);
+    offset += local.length + data.length;
+  }
+
+  const cdSize = centrals.reduce((n, c) => n + c.length, 0);
+  const eocd = new Uint8Array(22);
+  const ev = new DataView(eocd.buffer);
+  u32(ev, 0, 0x06054B50);
+  u16(ev, 4, 0);
+  u16(ev, 6, 0);
+  u16(ev, 8, entries.length);
+  u16(ev, 10, entries.length);
+  u32(ev, 12, cdSize);
+  u32(ev, 16, offset);
+  u16(ev, 20, 0);
+
+  const total = offset + cdSize + eocd.length;
+  const out = new Uint8Array(total);
+  let pos = 0;
+  for (const part of [...locals, ...centrals, eocd]) { out.set(part, pos); pos += part.length; }
+  return out;
+}
+
+return { crc32, writeZip };
+});
+
+__wsgDef("src/usecases/ExportDocx.js", function (__wsgReq) {
+const { writeZip } = __wsgReq("src/usecases/zipWriter.js");
+const { buildEditableDoc, hex6 } = __wsgReq("src/usecases/editableDoc.js");
+
+// ExportDocx — 편집용 문서 모델(editableDoc)을 **DOCX**(WordprocessingML)로 직렬화한다. 순수 함수.
+//
+// 목적은 "한글·워드에서 문항을 고치는 것"이다. 인쇄 조판의 복제가 아니다 — 쪽 나눔은 워드가 다시
+// 계산하고, 상자는 표로, 답란은 밑줄 문단으로, 수식은 읽을 수 있는 평문 근사로 옮긴다.
+// 그 변환 규칙은 editableDoc.js 에 한 번만 있고(HWPX 와 공유), 이 파일은 XML 만 안다.
+// 정답 제거는 여기서 하지 않는다: 호출부가 BuildVariants.stripAnswersFromDocument 로 만든 학생 벌
+// 트리를 넘긴다(불변식은 한 곳에서만 지킨다).
+//
+// 의존성 0: OOXML 을 직접 쓰고 zipWriter 로 담는다. 외부 라이브러리를 번들에 넣지 않는다.
+
+// 예전 호출부 호환 — 변환기는 editableDoc 으로 옮겼다.
+const { latexToRuns, inlineHtmlToRuns, blockHtmlToParagraphs } = __wsgReq("src/usecases/editableDoc.js");
+
+const W_NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+const R_NS = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+const FONT = '맑은 고딕';
+
+// ── 단위 ────────────────────────────────────────────────────────────────────
+const twips = (pt) => Math.round(pt * 20);      // 1pt = 20 twips
+const halfPt = (pt) => Math.round(pt * 2);      // w:sz 는 반포인트
+const eighthPt = (pt) => Math.round(pt * 8);    // 테두리 굵기는 1/8pt
+const lineVal = (ratio) => Math.round(ratio * 240); // 240 = 한 줄
+
+function xmlEsc(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// ── 런 ──────────────────────────────────────────────────────────────────────
+function runXml(r) {
+  if (r.br) return '<w:r><w:br/></w:r>';
+  const props = [];
+  props.push(`<w:rFonts w:ascii="${FONT}" w:eastAsia="${FONT}" w:hAnsi="${FONT}"/>`);
+  if (r.b) props.push('<w:b/>');
+  if (r.i) props.push('<w:i/>');
+  if (r.u) props.push('<w:u w:val="single"/>');
+  if (r.color) props.push(`<w:color w:val="${hex6(r.color)}"/>`);
+  if (r.size) props.push(`<w:sz w:val="${halfPt(r.size)}"/><w:szCs w:val="${halfPt(r.size)}"/>`);
+  if (r.sup) props.push('<w:vertAlign w:val="superscript"/>');
+  if (r.sub) props.push('<w:vertAlign w:val="subscript"/>');
+  if (r.shade) props.push(`<w:shd w:val="clear" w:color="auto" w:fill="${hex6(r.shade)}"/>`);
+  return `<w:r><w:rPr>${props.join('')}</w:rPr><w:t xml:space="preserve">${xmlEsc(r.text)}</w:t></w:r>`;
+}
+
+// ── 문단 ────────────────────────────────────────────────────────────────────
+function pXml(p) {
+  const pr = [];
+  if (p.keepNext) pr.push('<w:keepNext/>');
+  if (p.pageBreakBefore) pr.push('<w:pageBreakBefore/>');
+  if (p.border) {
+    const { color = 'AAAAAA', widthPt = 0.5, sides = ['bottom'] } = p.border;
+    pr.push('<w:pBdr>' + sides.map((s) => `<w:${s} w:val="single" w:sz="${eighthPt(widthPt)}" w:space="1" w:color="${hex6(color)}"/>`).join('') + '</w:pBdr>');
+  }
+  if (p.shade) pr.push(`<w:shd w:val="clear" w:color="auto" w:fill="${hex6(p.shade)}"/>`);
+  const spacing = [];
+  if (p.before != null) spacing.push(`w:before="${twips(p.before)}"`);
+  if (p.after != null) spacing.push(`w:after="${twips(p.after)}"`);
+  if (p.line != null) spacing.push(`w:line="${lineVal(p.line)}" w:lineRule="auto"`);
+  if (spacing.length) pr.push(`<w:spacing ${spacing.join(' ')}/>`);
+  if (p.indent) pr.push(`<w:ind w:left="${twips(p.indent)}"/>`);
+  if (p.align) pr.push(`<w:jc w:val="${p.align}"/>`);
+  const body = (p.runs || []).map(runXml).join('');
+  if (!pr.length && !body) return '<w:p/>';
+  return `<w:p>${pr.length ? `<w:pPr>${pr.join('')}</w:pPr>` : ''}${body}</w:p>`;
+}
+
+// ── 표 ──────────────────────────────────────────────────────────────────────
+function tblXml(t) {
+  const { widths = null, borders = true, borderColor = 'CBD5C0', cellMargin = 5, indent = 0 } = t;
+  const bdr = borders
+    ? ['top', 'left', 'bottom', 'right', 'insideH', 'insideV'].map((s) => `<w:${s} w:val="single" w:sz="6" w:space="0" w:color="${hex6(borderColor)}"/>`).join('')
+    : ['top', 'left', 'bottom', 'right', 'insideH', 'insideV'].map((s) => `<w:${s} w:val="nil"/>`).join('');
+  const grid = widths ? `<w:tblGrid>${widths.map((w) => `<w:gridCol w:w="${twips(w)}"/>`).join('')}</w:tblGrid>` : '';
+  const trs = t.rows.map((cells) => {
+    const tcs = cells.map((c) => {
+      const pr = [];
+      if (c.width) pr.push(`<w:tcW w:w="${twips(c.width)}" w:type="dxa"/>`);
+      if (c.span && c.span > 1) pr.push(`<w:gridSpan w:val="${c.span}"/>`);
+      if (c.shade) pr.push(`<w:shd w:val="clear" w:color="auto" w:fill="${hex6(c.shade)}"/>`);
+      if (c.vAlign) pr.push(`<w:vAlign w:val="${c.vAlign}"/>`);
+      // 셀은 반드시 문단으로 끝나야 한다(중첩 표 뒤에 빈 문단을 붙인다).
+      const content = (c.blocks || []).map(blockXml).join('') || '<w:p/>';
+      const ending = content.endsWith('</w:tbl>') ? content + '<w:p/>' : content;
+      return `<w:tc><w:tcPr>${pr.join('')}</w:tcPr>${ending}</w:tc>`;
+    }).join('');
+    const trPr = cells.some((c) => c.minHeight) ? `<w:trPr><w:trHeight w:val="${twips(Math.max(...cells.map((c) => c.minHeight || 0)))}"/></w:trPr>` : '';
+    return `<w:tr>${trPr}${tcs}</w:tr>`;
+  }).join('');
+  const cm = twips(cellMargin);
+  return `<w:tbl><w:tblPr><w:tblW w:w="0" w:type="auto"/>${indent ? `<w:tblInd w:w="${twips(indent)}" w:type="dxa"/>` : ''}`
+    + `<w:tblBorders>${bdr}</w:tblBorders><w:tblLayout w:type="fixed"/>`
+    + `<w:tblCellMar><w:top w:w="${cm}" w:type="dxa"/><w:left w:w="${cm + 40}" w:type="dxa"/><w:bottom w:w="${cm}" w:type="dxa"/><w:right w:w="${cm + 40}" w:type="dxa"/></w:tblCellMar>`
+    + `<w:tblLook w:val="0000"/></w:tblPr>${grid}${trs}</w:tbl>`;
+}
+
+function blockXml(b) {
+  return b.kind === 'table' ? tblXml(b) : pXml(b);
+}
+
+class ExportDocx {
+  /**
+   * @param {object} document 개체 트리(학생 벌이면 이미 정답이 제거된 트리)
+   * @param {{mode?:'student'|'teacher', themeCss?:string, standards?:Array<{code,text}>}} opts
+   * @returns {{bytes:Uint8Array, notes:string[]}}
+   */
+  execute(document, opts = {}) {
+    if (!document || typeof document !== 'object') throw new TypeError('ExportDocx.execute 는 개체 트리 문서가 필요합니다.');
+    const model = buildEditableDoc(document, opts);
+    const { page, theme } = model;
+
+    const body = model.blocks.map(blockXml).join('');
+    const sectPr = `<w:sectPr><w:pgSz w:w="${twips(page.widthPt)}" w:h="${twips(page.heightPt)}"${page.landscape ? ' w:orient="landscape"' : ''}/>`
+      + `<w:pgMar w:top="${twips(page.margins.top)}" w:right="${twips(page.margins.right)}" w:bottom="${twips(page.margins.bottom)}" w:left="${twips(page.margins.left)}" w:header="400" w:footer="400" w:gutter="0"/></w:sectPr>`;
+
+    const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n`
+      + `<w:document xmlns:w="${W_NS}" xmlns:r="${R_NS}"><w:body>${body}${sectPr}</w:body></w:document>`;
+
+    const bytes = writeZip([
+      { name: '[Content_Types].xml', data: CONTENT_TYPES },
+      { name: '_rels/.rels', data: ROOT_RELS },
+      { name: 'word/_rels/document.xml.rels', data: DOC_RELS },
+      { name: 'word/document.xml', data: documentXml },
+      { name: 'word/styles.xml', data: stylesXml(theme) },
+      { name: 'docProps/core.xml', data: coreXml(model.title) },
+    ]);
+    return { bytes, notes: model.notes };
+  }
 }
 
 // ── 패키지 파트 ─────────────────────────────────────────────────────────────
@@ -5294,6 +5429,309 @@ function coreXml(title) {
 
 return { latexToRuns, inlineHtmlToRuns, blockHtmlToParagraphs, ExportDocx };
 });
+
+__wsgDef("src/usecases/ExportHwpx.js", function (__wsgReq) {
+const { writeZip } = __wsgReq("src/usecases/zipWriter.js");
+const { buildEditableDoc, hex6 } = __wsgReq("src/usecases/editableDoc.js");
+
+// ExportHwpx — 편집용 문서 모델(editableDoc)을 **HWPX**(OWPML, KS X 6101)로 직렬화한다. 순수 함수.
+//
+// 한글에서 바로 열어 문항을 고치는 용도다. 인쇄 조판의 복제가 아니다 — 쪽 나눔은 한글이 다시
+// 계산하고, 상자는 표로, 답란은 밑줄 문단으로, 수식은 읽을 수 있는 평문 근사로 옮긴다. 그 변환
+// 규칙은 editableDoc.js 에 한 번만 있고(DOCX 와 공유), 이 파일은 OWPML 만 안다.
+// 정답 제거는 여기서 하지 않는다: 호출부가 BuildVariants.stripAnswersFromDocument 로 만든 학생 벌
+// 트리를 넘긴다(불변식은 한 곳에서만 지킨다).
+//
+// 의존성 0: XML 을 직접 쓰고 zipWriter 로 담는다(저장 방식 ZIP — 한글 2022 로 열리는 것을 실측).
+//
+// OWPML 은 글자·문단·테두리 모양을 header.xml 의 목록(refList)에 등록하고 본문은 그 번호만 가리킨다.
+// 그래서 본문을 먼저 만들며 모양을 등록기(registry)에 모으고, 마지막에 header.xml 을 쓴다.
+// 패키지 구성과 각 요소의 속성 집합은 한글 2022 가 저장한 파일을 기준으로 삼았다.
+
+const HWPUNIT_PER_PT = 100;                    // 1pt = 100 HWPUNIT(1/7200 inch)
+const hu = (pt) => Math.round(pt * HWPUNIT_PER_PT);
+const FONT = '함초롬돋움';
+const DEFAULT_SIZE_PT = 10.5;
+const DEFAULT_LINE_PERCENT = 130;
+const BORDER_WIDTH = '0.12 mm';
+
+const NS = 'xmlns:ha="http://www.hancom.co.kr/hwpml/2011/app" xmlns:hp="http://www.hancom.co.kr/hwpml/2011/paragraph" '
+  + 'xmlns:hp10="http://www.hancom.co.kr/hwpml/2016/paragraph" xmlns:hs="http://www.hancom.co.kr/hwpml/2011/section" '
+  + 'xmlns:hc="http://www.hancom.co.kr/hwpml/2011/core" xmlns:hh="http://www.hancom.co.kr/hwpml/2011/head" '
+  + 'xmlns:hhs="http://www.hancom.co.kr/hwpml/2011/history" xmlns:hm="http://www.hancom.co.kr/hwpml/2011/master-page" '
+  + 'xmlns:hpf="http://www.hancom.co.kr/schema/2011/hpf" xmlns:dc="http://purl.org/dc/elements/1.1/" '
+  + 'xmlns:opf="http://www.idpf.org/2007/opf/" xmlns:ooxmlchart="http://www.hancom.co.kr/hwpml/2016/ooxmlchart" '
+  + 'xmlns:hwpunitchar="http://www.hancom.co.kr/hwpml/2016/HwpUnitChar" xmlns:epub="http://www.idpf.org/2007/ops" '
+  + 'xmlns:config="urn:oasis:names:tc:opendocument:xmlns:config:1.0"';
+const XML_DECL = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
+
+function xmlEsc(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+    // XML 1.0 이 허용하지 않는 제어 문자는 버린다(모델이 복사해 온 HTML 원문에 섞여 올 수 있다).
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
+}
+const color = (c, fallback = '000000') => '#' + (hex6(c) || fallback);
+
+// ── 등록기(모양 목록) ────────────────────────────────────────────────────────
+class Registry {
+  constructor() { this.items = []; this.index = new Map(); }
+  /** 같은 모양은 같은 번호 — key 로 중복을 접는다. @returns {number} id */
+  id(key, make) {
+    if (this.index.has(key)) return this.index.get(key);
+    const id = this.items.length + this.base;
+    this.index.set(key, id);
+    this.items.push(make(id));
+    return id;
+  }
+}
+function registry(base) { const r = new Registry(); r.base = base; return r; }
+
+/** 테두리·채움 모양. sides: {l,r,t,b} 각각 true 면 실선, fill: hex6|null */
+function borderFillXml(id, spec) {
+  const side = (on) => (on
+    ? `type="SOLID" width="${BORDER_WIDTH}" color="${color(spec.color, '000000')}"`
+    : `type="NONE" width="0.1 mm" color="#000000"`);
+  const fill = spec.fill ? `<hc:fillBrush><hc:winBrush faceColor="${color(spec.fill)}" hatchColor="#FF000000" alpha="0"/></hc:fillBrush>` : '';
+  return `<hh:borderFill id="${id}" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">`
+    + '<hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/>'
+    + `<hh:leftBorder ${side(spec.l)}/><hh:rightBorder ${side(spec.r)}/><hh:topBorder ${side(spec.t)}/><hh:bottomBorder ${side(spec.b)}/>`
+    + '<hh:diagonal type="SOLID" width="0.1 mm" color="#000000"/>' + fill + '</hh:borderFill>';
+}
+
+function charPrXml(id, r) {
+  const sizePt = r.size || DEFAULT_SIZE_PT;
+  const all7 = (v) => `hangul="${v}" latin="${v}" hanja="${v}" japanese="${v}" other="${v}" symbol="${v}" user="${v}"`;
+  return `<hh:charPr id="${id}" height="${hu(sizePt)}" textColor="${color(r.color, '000000')}" shadeColor="${r.shade ? color(r.shade) : 'none'}" useFontSpace="0" useKerning="0" symMark="NONE" borderFillIDRef="1">`
+    + `<hh:fontRef ${all7(0)}/><hh:ratio ${all7(100)}/><hh:spacing ${all7(0)}/><hh:relSz ${all7(100)}/><hh:offset ${all7(0)}/>`
+    + (r.i ? '<hh:italic/>' : '') + (r.b ? '<hh:bold/>' : '')
+    + `<hh:underline type="${r.u ? 'BOTTOM' : 'NONE'}" shape="SOLID" color="${color(r.color, '000000')}"/>`
+    + '<hh:strikeout shape="NONE" color="#000000"/><hh:outline type="NONE"/><hh:shadow type="NONE" color="#B2B2B2" offsetX="10" offsetY="10"/>'
+    + (r.sup ? '<hh:supscript/>' : '') + (r.sub ? '<hh:subscript/>' : '')
+    + '</hh:charPr>';
+}
+
+function paraPrXml(id, p) {
+  const align = { left: 'LEFT', center: 'CENTER', right: 'RIGHT', both: 'JUSTIFY' }[p.align] || 'LEFT';
+  const margin = `<hh:margin><hc:intent value="0" unit="HWPUNIT"/><hc:left value="${hu(p.indent || 0)}" unit="HWPUNIT"/><hc:right value="0" unit="HWPUNIT"/>`
+    + `<hc:prev value="${hu(p.before || 0)}" unit="HWPUNIT"/><hc:next value="${hu(p.after || 0)}" unit="HWPUNIT"/></hh:margin>`
+    + `<hh:lineSpacing type="PERCENT" value="${p.line ? Math.round(p.line * 100) : DEFAULT_LINE_PERCENT}" unit="HWPUNIT"/>`;
+  return `<hh:paraPr id="${id}" tabPrIDRef="0" condense="0" fontLineHeight="0" snapToGrid="1" suppressLineNumbers="0" checked="0">`
+    + `<hh:align horizontal="${align}" vertical="BASELINE"/><hh:heading type="NONE" idRef="0" level="0"/>`
+    + `<hh:breakSetting breakLatinWord="KEEP_WORD" breakNonLatinWord="KEEP_WORD" widowOrphan="0" keepWithNext="${p.keepNext ? 1 : 0}" keepLines="0" pageBreakBefore="${p.pageBreakBefore ? 1 : 0}" lineWrap="BREAK"/>`
+    + '<hh:autoSpacing eAsianEng="0" eAsianNum="0"/>'
+    + `<hp:switch><hp:case hp:required-namespace="http://www.hancom.co.kr/hwpml/2016/HwpUnitChar">${margin}</hp:case><hp:default>${margin}</hp:default></hp:switch>`
+    + `<hh:border borderFillIDRef="${p.borderFillId}" offsetLeft="0" offsetRight="0" offsetTop="0" offsetBottom="${p.borderFillId !== 1 ? 100 : 0}" connect="0" ignoreMargin="0"/>`
+    + '</hh:paraPr>';
+}
+
+// ── 본문 직렬화 ─────────────────────────────────────────────────────────────
+class Writer {
+  constructor() {
+    this.borderFills = registry(1);
+    this.charPrs = registry(0);
+    this.paraPrs = registry(0);
+    this.nextId = 1;
+    this.zOrder = 0;
+    this.plain = [];
+    // id 1 은 "선 없음·채움 없음" — 글자·문단 기본이 이 번호를 가리킨다.
+    this.noBorder = this.borderFill({ l: false, r: false, t: false, b: false, fill: null, color: '000000' });
+    this.charPr({});
+    this.paraPr({});
+  }
+  uid() { return String(this.nextId++); }
+  borderFill(spec) {
+    const key = [spec.l, spec.r, spec.t, spec.b, hex6(spec.color), hex6(spec.fill)].join('|');
+    return this.borderFills.id(key, (id) => borderFillXml(id, spec));
+  }
+  charPr(r) {
+    const spec = { b: !!r.b, i: !!r.i, u: !!r.u, sup: !!r.sup, sub: !!r.sub, color: hex6(r.color), size: r.size || 0, shade: hex6(r.shade) };
+    return this.charPrs.id(JSON.stringify(spec), (id) => charPrXml(id, spec));
+  }
+  paraPr(p) {
+    let borderFillId = this.noBorder;
+    if (p.border || p.shade) {
+      const sides = p.border ? (p.border.sides || ['bottom']) : [];
+      borderFillId = this.borderFill({
+        l: sides.includes('left'), r: sides.includes('right'), t: sides.includes('top'), b: sides.includes('bottom'),
+        color: p.border ? p.border.color : '000000', fill: p.shade || null,
+      });
+    }
+    const spec = { align: p.align || '', before: p.before || 0, after: p.after || 0, line: p.line || 0, indent: p.indent || 0, keepNext: !!p.keepNext, pageBreakBefore: !!p.pageBreakBefore, borderFillId };
+    return this.paraPrs.id(JSON.stringify(spec), (id) => paraPrXml(id, spec));
+  }
+
+  /** 문단 하나 → <hp:p>. 줄바꿈(br)은 문단을 나눈다(편집용이라 의미는 같다). lead 는 첫 run 앞에 끼울 XML(구역 설정). */
+  paragraph(p, lead = '') {
+    const paraPrId = this.paraPr(p);
+    const groups = [[]];
+    for (const r of (p.runs || [])) {
+      if (r.br) groups.push([]);
+      else groups[groups.length - 1].push(r);
+    }
+    return groups.map((runs, i) => {
+      const body = runs.filter((r) => r.text).map((r) => {
+        this.plain.push(r.text);
+        return `<hp:run charPrIDRef="${this.charPr(r)}"><hp:t>${xmlEsc(r.text)}</hp:t></hp:run>`;
+      }).join('');
+      const first = i === 0 ? lead : '';
+      const pageBreak = p.pageBreakBefore && i === 0 ? 1 : 0;
+      return `<hp:p id="${this.uid()}" paraPrIDRef="${paraPrId}" styleIDRef="0" pageBreak="${pageBreak}" columnBreak="0" merged="0">`
+        + first + (body || (first ? '' : '<hp:run charPrIDRef="0"/>')) + '</hp:p>';
+    }).join('');
+  }
+
+  /** 표 → 표를 담은 문단 하나. 셀 테두리·채움은 borderFill 로 등록한다. */
+  table(t) {
+    const rows = t.rows || [];
+    const colCount = Math.max(...rows.map((r) => r.reduce((n, c) => n + (c.span || 1), 0)), 1);
+    const widths = t.widths || rows[0].map((c) => c.width || 0);
+    const totalW = hu(widths.reduce((a, b) => a + b, 0));
+    const margin = hu(t.cellMargin != null ? t.cellMargin : 5);
+    const on = !!t.borders;
+    const cellFill = (shade) => this.borderFill({ l: on, r: on, t: on, b: on, color: t.borderColor || 'CBD5C0', fill: shade || null });
+    const tableBorder = cellFill(null);
+
+    const rowHeights = rows.map((cells) => hu(Math.max(13, ...cells.map((c) => c.minHeight || 0))));
+    const trs = rows.map((cells, ri) => {
+      let col = 0;
+      const tcs = cells.map((c) => {
+        const span = c.span || 1;
+        const width = hu(c.width || widths.slice(col, col + span).reduce((a, b) => a + b, 0));
+        const inner = (c.blocks || []).map((b) => this.block(b)).join('') || this.paragraph({ runs: [] });
+        const tc = `<hp:tc name="" header="0" hasMargin="0" protect="0" editable="0" dirty="0" borderFillIDRef="${cellFill(c.shade)}">`
+          + `<hp:subList id="" textDirection="HORIZONTAL" lineWrap="BREAK" vertAlign="${c.vAlign === 'center' ? 'CENTER' : 'TOP'}" linkListIDRef="0" linkListNextIDRef="0" textWidth="0" textHeight="0" hasTextRef="0" hasNumRef="0">`
+          + inner + '</hp:subList>'
+          + `<hp:cellAddr colAddr="${col}" rowAddr="${ri}"/><hp:cellSpan colSpan="${span}" rowSpan="1"/>`
+          + `<hp:cellSz width="${width}" height="${rowHeights[ri]}"/>`
+          + `<hp:cellMargin left="${margin}" right="${margin}" top="${margin}" bottom="${margin}"/></hp:tc>`;
+        col += span;
+        return tc;
+      }).join('');
+      return `<hp:tr>${tcs}</hp:tr>`;
+    }).join('');
+
+    const tbl = `<hp:tbl id="${this.uid()}" zOrder="${this.zOrder++}" numberingType="TABLE" textWrap="TOP_AND_BOTTOM" textFlow="BOTH_SIDES" lock="0" dropcapstyle="None" pageBreak="CELL" repeatHeader="0" rowCnt="${rows.length}" colCnt="${colCount}" cellSpacing="0" borderFillIDRef="${tableBorder}" noAdjust="0">`
+      + `<hp:sz width="${totalW}" widthRelTo="ABSOLUTE" height="${rowHeights.reduce((a, b) => a + b, 0)}" heightRelTo="ABSOLUTE" protect="0"/>`
+      + '<hp:pos treatAsChar="1" affectLSpacing="0" flowWithText="1" allowOverlap="0" holdAnchorAndSO="0" vertRelTo="PARA" horzRelTo="COLUMN" vertAlign="TOP" horzAlign="LEFT" vertOffset="0" horzOffset="0"/>'
+      + `<hp:outMargin left="0" right="0" top="0" bottom="0"/><hp:inMargin left="${margin}" right="${margin}" top="${margin}" bottom="${margin}"/>`
+      + trs + '</hp:tbl>';
+    const paraPrId = this.paraPr({ indent: t.indent || 0 });
+    return `<hp:p id="${this.uid()}" paraPrIDRef="${paraPrId}" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0"><hp:run charPrIDRef="0">${tbl}</hp:run></hp:p>`;
+  }
+
+  block(b) { return b.kind === 'table' ? this.table(b) : this.paragraph(b); }
+}
+
+function secPrXml(page) {
+  const m = page.margins;
+  const noteDefaults = (type, len, betweenNotes, place) => `<hp:${type}><hp:autoNumFormat type="DIGIT" userChar="" prefixChar="" suffixChar=")" supscript="0"/>`
+    + `<hp:noteLine length="${len}" type="SOLID" width="0.12 mm" color="#000000"/><hp:noteSpacing betweenNotes="${betweenNotes}" belowLine="567" aboveLine="850"/>`
+    + `<hp:numbering type="CONTINUOUS" newNum="1"/><hp:placement place="${place}" beneathText="0"/></hp:${type}>`;
+  const pageBorder = (type) => `<hp:pageBorderFill type="${type}" borderFillIDRef="1" textBorder="PAPER" headerInside="0" footerInside="0" fillArea="PAPER"><hp:offset left="1417" right="1417" top="1417" bottom="1417"/></hp:pageBorderFill>`;
+  return '<hp:secPr id="" textDirection="HORIZONTAL" spaceColumns="1134" tabStop="8000" tabStopVal="4000" tabStopUnit="HWPUNIT" outlineShapeIDRef="0" memoShapeIDRef="0" textVerticalWidthHead="0" masterPageCnt="0">'
+    + '<hp:grid lineGrid="0" charGrid="0" wonggojiFormat="0"/><hp:startNum pageStartsOn="BOTH" page="0" pic="0" tbl="0" equation="0"/>'
+    + '<hp:visibility hideFirstHeader="0" hideFirstFooter="0" hideFirstMasterPage="0" border="SHOW_ALL" fill="SHOW_ALL" hideFirstPageNum="0" hideFirstEmptyLine="0" showLineNumber="0"/>'
+    + '<hp:lineNumberShape restartType="0" countBy="0" distance="0" startNumber="0"/>'
+    + `<hp:pagePr landscape="${page.landscape ? 'NARROWLY' : 'WIDELY'}" width="${hu(page.widthPt)}" height="${hu(page.heightPt)}" gutterType="LEFT_ONLY">`
+    + `<hp:margin header="${hu(Math.min(m.top, 15))}" footer="${hu(Math.min(m.bottom, 15))}" gutter="0" left="${hu(m.left)}" right="${hu(m.right)}" top="${hu(m.top)}" bottom="${hu(m.bottom)}"/></hp:pagePr>`
+    + noteDefaults('footNotePr', -1, 283, 'EACH_COLUMN') + noteDefaults('endNotePr', -4, 0, 'END_OF_DOCUMENT')
+    + pageBorder('BOTH') + pageBorder('EVEN') + pageBorder('ODD')
+    + '</hp:secPr><hp:ctrl><hp:colPr id="" type="NEWSPAPER" layout="LEFT" colCount="1" sameSz="1" sameGap="0"/></hp:ctrl>';
+}
+
+class ExportHwpx {
+  /**
+   * @param {object} document 개체 트리(학생 벌이면 이미 정답이 제거된 트리)
+   * @param {{mode?:'student'|'teacher', themeCss?:string, standards?:Array<{code,text}>}} opts
+   * @returns {{bytes:Uint8Array, notes:string[]}}
+   */
+  execute(document, opts = {}) {
+    if (!document || typeof document !== 'object') throw new TypeError('ExportHwpx.execute 는 개체 트리 문서가 필요합니다.');
+    const model = buildEditableDoc(document, opts);
+    const w = new Writer();
+
+    // 첫 문단이 구역 설정(용지·여백)을 지닌다 — 모델의 첫 블록은 항상 모드 표식 문단이다.
+    const [first, ...rest] = model.blocks;
+    const lead = `<hp:run charPrIDRef="0">${secPrXml(model.page)}</hp:run>`;
+    const body = (first.kind === 'p' ? w.paragraph(first, lead) : w.paragraph({ runs: [] }, lead) + w.block(first))
+      + rest.map((b) => w.block(b)).join('');
+
+    const sectionXml = XML_DECL + `<hs:sec ${NS}>${body}</hs:sec>`;
+    const headerXml = XML_DECL + headXml(w);
+    const preview = w.plain.join(' ').replace(/\s+/g, ' ').trim().slice(0, 1000);
+
+    // mimetype 은 첫 항목·무압축이어야 한다(컨테이너 규약).
+    const bytes = writeZip([
+      { name: 'mimetype', data: 'application/hwp+zip' },
+      { name: 'version.xml', data: VERSION_XML },
+      { name: 'META-INF/container.xml', data: CONTAINER_XML },
+      { name: 'META-INF/manifest.xml', data: MANIFEST_XML },
+      { name: 'META-INF/container.rdf', data: CONTAINER_RDF },
+      { name: 'Contents/content.hpf', data: contentHpf(model.title) },
+      { name: 'Contents/header.xml', data: headerXml },
+      { name: 'Contents/section0.xml', data: sectionXml },
+      { name: 'Preview/PrvText.txt', data: preview },
+      { name: 'settings.xml', data: SETTINGS_XML },
+    ]);
+    return { bytes, notes: model.notes };
+  }
+}
+
+// ── header.xml ──────────────────────────────────────────────────────────────
+function headXml(w) {
+  const langs = ['HANGUL', 'LATIN', 'HANJA', 'JAPANESE', 'OTHER', 'SYMBOL', 'USER'];
+  const fontfaces = langs.map((lang) => `<hh:fontface lang="${lang}" fontCnt="1"><hh:font id="0" face="${FONT}" type="TTF" isEmbedded="0">`
+    + '<hh:typeInfo familyType="FCAT_GOTHIC" weight="6" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/></hh:font></hh:fontface>').join('');
+  return `<hh:head ${NS} version="1.4" secCnt="1">`
+    + '<hh:beginNum page="1" footnote="1" endnote="1" pic="1" tbl="1" equation="1"/>'
+    + '<hh:refList>'
+    + `<hh:fontfaces itemCnt="7">${fontfaces}</hh:fontfaces>`
+    + `<hh:borderFills itemCnt="${w.borderFills.items.length}">${w.borderFills.items.join('')}</hh:borderFills>`
+    + `<hh:charProperties itemCnt="${w.charPrs.items.length}">${w.charPrs.items.join('')}</hh:charProperties>`
+    + '<hh:tabProperties itemCnt="1"><hh:tabPr id="0" autoTabLeft="0" autoTabRight="0"/></hh:tabProperties>'
+    + `<hh:paraProperties itemCnt="${w.paraPrs.items.length}">${w.paraPrs.items.join('')}</hh:paraProperties>`
+    + '<hh:styles itemCnt="1"><hh:style id="0" type="PARA" name="바탕글" engName="Normal" paraPrIDRef="0" charPrIDRef="0" nextStyleIDRef="0" langID="1042" lockForm="0"/></hh:styles>'
+    + '</hh:refList>'
+    + '<hh:compatibleDocument targetProgram="HWP201X"><hh:layoutCompatibility/></hh:compatibleDocument>'
+    + '<hh:docOption><hh:linkinfo path="" pageInherit="0" footnoteInherit="0"/></hh:docOption>'
+    + '<hh:trackchageConfig flags="56"/>'
+    + '</hh:head>';
+}
+
+// ── 패키지 파트 ─────────────────────────────────────────────────────────────
+const VERSION_XML = XML_DECL + '<hv:HCFVersion xmlns:hv="http://www.hancom.co.kr/hwpml/2011/version" tagetApplication="WORDPROCESSOR" major="5" minor="1" micro="1" buildNumber="0" os="1" xmlVersion="1.4" application="worksheet-grab" appVersion="0.6"/>';
+
+const CONTAINER_XML = XML_DECL + '<ocf:container xmlns:ocf="urn:oasis:names:tc:opendocument:xmlns:container" xmlns:hpf="http://www.hancom.co.kr/schema/2011/hpf"><ocf:rootfiles>'
+  + '<ocf:rootfile full-path="Contents/content.hpf" media-type="application/hwpml-package+xml"/>'
+  + '<ocf:rootfile full-path="Preview/PrvText.txt" media-type="text/plain"/>'
+  + '<ocf:rootfile full-path="META-INF/container.rdf" media-type="application/rdf+xml"/>'
+  + '</ocf:rootfiles></ocf:container>';
+
+const MANIFEST_XML = XML_DECL + '<odf:manifest xmlns:odf="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0"/>';
+
+const CONTAINER_RDF = XML_DECL + '<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">'
+  + '<rdf:Description rdf:about=""><ns0:hasPart xmlns:ns0="http://www.hancom.co.kr/hwpml/2016/meta/pkg#" rdf:resource="Contents/header.xml"/></rdf:Description>'
+  + '<rdf:Description rdf:about="Contents/header.xml"><rdf:type rdf:resource="http://www.hancom.co.kr/hwpml/2016/meta/pkg#HeaderFile"/></rdf:Description>'
+  + '<rdf:Description rdf:about=""><ns0:hasPart xmlns:ns0="http://www.hancom.co.kr/hwpml/2016/meta/pkg#" rdf:resource="Contents/section0.xml"/></rdf:Description>'
+  + '<rdf:Description rdf:about="Contents/section0.xml"><rdf:type rdf:resource="http://www.hancom.co.kr/hwpml/2016/meta/pkg#SectionFile"/></rdf:Description>'
+  + '<rdf:Description rdf:about=""><rdf:type rdf:resource="http://www.hancom.co.kr/hwpml/2016/meta/pkg#Document"/></rdf:Description>'
+  + '</rdf:RDF>';
+
+const SETTINGS_XML = XML_DECL + '<ha:HWPApplicationSetting xmlns:ha="http://www.hancom.co.kr/hwpml/2011/app" xmlns:config="urn:oasis:names:tc:opendocument:xmlns:config:1.0"><ha:CaretPosition listIDRef="0" paraIDRef="0" pos="0"/></ha:HWPApplicationSetting>';
+
+function contentHpf(title) {
+  return XML_DECL + `<opf:package ${NS} version="" unique-identifier="" id="">`
+    + `<opf:metadata><opf:title>${xmlEsc(title)}</opf:title><opf:language>ko</opf:language>`
+    + '<opf:meta name="creator" content="text">worksheet-grab</opf:meta></opf:metadata>'
+    + '<opf:manifest><opf:item id="header" href="Contents/header.xml" media-type="application/xml"/>'
+    + '<opf:item id="section0" href="Contents/section0.xml" media-type="application/xml"/>'
+    + '<opf:item id="settings" href="settings.xml" media-type="application/xml"/></opf:manifest>'
+    + '<opf:spine><opf:itemref idref="header" linear="yes"/><opf:itemref idref="section0" linear="yes"/></opf:spine>'
+    + '</opf:package>';
+}
+
+return { ExportHwpx };
+});
 </script>
 <script>
 /**
@@ -5320,6 +5758,7 @@ return { latexToRuns, inlineHtmlToRuns, blockHtmlToParagraphs, ExportDocx };
   var ReviewMod = __wsgReq('src/usecases/ValidateWorksheet.js');
   var ScanMod = __wsgReq('src/usecases/html-scan.js');
   var DocxMod = __wsgReq('src/usecases/ExportDocx.js');
+  var HwpxMod = __wsgReq('src/usecases/ExportHwpx.js');
 
   var $ = function (id) { return document.getElementById(id); };
   var el = {
@@ -5328,7 +5767,11 @@ return { latexToRuns, inlineHtmlToRuns, blockHtmlToParagraphs, ExportDocx };
     // 뷰어
     frame: $('frame'), measure: $('measure'), empty: $('empty'), pageInfo: $('pageInfo'),
     tabStudent: $('tabStudent'), tabTeacher: $('tabTeacher'), btnPrint: $('btnPrint'), btnSaveHtml: $('btnSaveHtml'),
-    btnSaveDocx: $('btnSaveDocx'),
+    btnSaveDocx: $('btnSaveDocx'), btnSaveHwpx: $('btnSaveHwpx'),
+    // 보관함
+    library: $('library'), btnLibrary: $('btnLibrary'), btnLibraryClose: $('btnLibraryClose'),
+    libList: $('libList'), libSearch: $('libSearch'), libCount: $('libCount'), libStatus: $('libStatus'),
+    libFileIn: $('libFileIn'), btnLibBackup: $('btnLibBackup'), libRestoreIn: $('libRestoreIn'),
     // 설정
     settings: $('settings'), btnSettings: $('btnSettings'), btnSettingsInline: $('btnSettingsInline'),
     btnSettingsClose: $('btnSettingsClose'),
@@ -5645,6 +6088,12 @@ return { latexToRuns, inlineHtmlToRuns, blockHtmlToParagraphs, ExportDocx };
       return;
     }
     if (!opts.silentUser) pushUser('활동지 JSON을 붙여넣었습니다.');
+    // 붙여넣은 JSON 은 새 활동지다 — 이전 대화·보관함 항목에 이어 붙이지 않는다(AI·보관함 경로는 keepChat).
+    if (!opts.keepChat && !opts.silentUser && typeof chat !== 'undefined') {
+      chat.history = [];
+      chat.libraryId = null;
+      chat.firstRequest = '';
+    }
     setOutputs(null);
     clearLog();
 
@@ -5749,6 +6198,10 @@ return { latexToRuns, inlineHtmlToRuns, blockHtmlToParagraphs, ExportDocx };
       say('ok', '검수 통과 — 학생용 정답 제거 확인.');
       setOutputs(variants);
       preview();
+      // 보관함 저장 + 대화 맥락 보장(붙여넣기 경로도 이어서 고칠 수 있게). 내장 예시는 보관하지 않는다.
+      var rawJson = JSON.stringify(raw, null, 2);
+      seedHistory(doc, rawJson);
+      if (text !== JSON.stringify(SAMPLE, null, 2)) librarySave(doc, rawJson);
       // 걸린 시간을 결과에 남긴다 — 교사가 다음 요청에서 무엇을 기다릴지 알게 된다.
       var aiMs = (typeof chat !== 'undefined' && chat.lastAiMs) || 0;
       var timeTag = aiMs
@@ -5790,6 +6243,7 @@ return { latexToRuns, inlineHtmlToRuns, blockHtmlToParagraphs, ExportDocx };
     el.btnPrint.disabled = !has;
     el.btnSaveHtml.disabled = !has;
     el.btnSaveDocx.disabled = !has;
+    el.btnSaveHwpx.disabled = !has;
     el.pageInfo.hidden = !has;
     el.tabStudent.disabled = !!(variants && !variants.student);
     if (has) el.pageInfo.textContent = 'A4 ' + state.pageCount + '쪽';
@@ -5868,24 +6322,232 @@ return { latexToRuns, inlineHtmlToRuns, blockHtmlToParagraphs, ExportDocx };
     downloadBlob(new Blob([html], { type: 'text/html;charset=utf-8' }), name);
   }
 
-  /** 편집용 DOCX — 현재 탭(학생용/교사용) 기준. 학생 벌은 BuildVariants 와 같은 함수로 정답을 지운다. */
-  function saveDocx() {
-    if (!state.paginatedDoc || !currentHtml()) return;
+  /** 편집용 문서 형식 — 둘 다 같은 편집용 모델(editableDoc)에서 나오므로 내용이 같다. */
+  var EDITABLE = {
+    docx: { ctor: function () { return DocxMod.ExportDocx; }, ext: 'docx', app: '한글·워드',
+      mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' },
+    hwpx: { ctor: function () { return HwpxMod.ExportHwpx; }, ext: 'hwpx', app: '한글', mime: 'application/hwp+zip' },
+  };
+
+  /** 편집용 DOCX/HWPX — 현재 탭(학생용/교사용) 기준. 학생 벌은 BuildVariants 와 같은 함수로 정답을 지운다. */
+  function saveEditable(kind) {
+    var fmt = EDITABLE[kind];
+    if (!fmt || !state.paginatedDoc || !currentHtml()) return;
     var teacher = state.mode === 'teacher';
     var tree = teacher ? state.paginatedDoc : VariantsMod.stripAnswersFromDocument(state.paginatedDoc);
     var result;
     try {
-      result = new DocxMod.ExportDocx().execute(tree, { mode: teacher ? 'teacher' : 'student', themeCss: state.themeCss });
+      var Exporter = fmt.ctor();
+      result = new Exporter().execute(tree, { mode: teacher ? 'teacher' : 'student', themeCss: state.themeCss });
     } catch (e) {
-      pushAI('DOCX 를 만들지 못했습니다: ' + esc(e && e.message ? e.message : String(e)));
+      pushAI(fmt.ext.toUpperCase() + ' 를 만들지 못했습니다: ' + esc(e && e.message ? e.message : String(e)));
       return;
     }
-    var name = state.docTitle + '_' + (teacher ? '교사용' : '학생용') + '.docx';
-    downloadBlob(new Blob([result.bytes], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }), name);
+    var name = state.docTitle + '_' + (teacher ? '교사용' : '학생용') + '.' + fmt.ext;
+    downloadBlob(new Blob([result.bytes], { type: fmt.mime }), name);
     var notes = result.notes.length ? '<br>' + result.notes.map(function (n) { return '· ' + esc(n); }).join('<br>') : '';
-    pushAI('<b>' + esc(name) + '</b> 를 내려받았습니다. 한글·워드에서 열어 고치세요 — 편집용이라 쪽 나눔은 프로그램이 다시 잡고, '
+    pushAI('<b>' + esc(name) + '</b> 를 내려받았습니다. ' + fmt.app + '에서 열어 고치세요 — 편집용이라 쪽 나눔은 프로그램이 다시 잡고, '
       + '상자는 표로, 답란은 밑줄로 바뀝니다. 인쇄물은 [인쇄 · PDF 저장]이 정확합니다.' + notes);
   }
+
+  // ── 보관함(IndexedDB) ───────────────────────────────────────────────────
+  // 만든 활동지는 이 브라우저의 IndexedDB 에 자동 저장한다 — 서버가 없으니 교사의 PC 가 유일한 저장소다.
+  // 한 대화(＋ 를 누르기 전까지)는 한 항목이다: 고칠 때마다 같은 항목을 덧쓴다("수정 이력"이 아니라
+  // "만든 활동지 목록"이 목적). 다른 PC 로 옮기는 길은 [JSON]·[전체 백업] 내려받기다.
+  var LIB_DB = 'wsg-library';
+  var LIB_STORE = 'worksheets';
+  var libDbPromise = null;
+
+  function libDb() {
+    if (libDbPromise) return libDbPromise;
+    libDbPromise = new Promise(function (resolve, reject) {
+      var idb = window.indexedDB;
+      if (!idb) { reject(new Error('이 브라우저는 보관함(IndexedDB)을 지원하지 않습니다.')); return; }
+      var req = idb.open(LIB_DB, 1);
+      req.onupgradeneeded = function () {
+        var db = req.result;
+        if (!db.objectStoreNames.contains(LIB_STORE)) db.createObjectStore(LIB_STORE, { keyPath: 'id' });
+      };
+      req.onsuccess = function () { resolve(req.result); };
+      req.onerror = function () { reject(req.error || new Error('보관함을 열 수 없습니다.')); };
+    });
+    libDbPromise.catch(function () { libDbPromise = null; }); // 다음 시도에서 다시 연다
+    return libDbPromise;
+  }
+  /** 트랜잭션 하나에 요청 하나 — fn 이 IDBRequest 를 돌려주면 그 결과로 resolve. */
+  function libTx(mode, fn) {
+    return libDb().then(function (db) {
+      return new Promise(function (resolve, reject) {
+        var tx = db.transaction(LIB_STORE, mode);
+        var req = fn(tx.objectStore(LIB_STORE));
+        tx.oncomplete = function () { resolve(req ? req.result : undefined); };
+        tx.onerror = function () { reject(tx.error || new Error('보관함 작업에 실패했습니다.')); };
+        tx.onabort = tx.onerror;
+      });
+    });
+  }
+  function libAll() { return libTx('readonly', function (s) { return s.getAll(); }); }
+  function libGet(id) { return libTx('readonly', function (s) { return s.get(id); }); }
+  function libPut(rec) { return libTx('readwrite', function (s) { return s.put(rec); }); }
+  function libDelete(id) { return libTx('readwrite', function (s) { return s.delete(id); }); }
+  function libId() { return 'ws_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+  /** 검수를 통과한 활동지를 보관함에 넣는다(같은 대화면 덧쓰기). 실패해도 활동지 흐름은 막지 않는다. */
+  function librarySave(doc, rawJson) {
+    var hasChat = typeof chat !== 'undefined';
+    var id = (hasChat && chat.libraryId) || libId();
+    var now = Date.now();
+    return libGet(id).then(function (prev) {
+      return libPut({
+        id: id,
+        title: String(doc.docTitle || '활동지'),
+        theme: resolveTheme(doc),
+        request: (hasChat && chat.firstRequest) || (prev && prev.request) || '',
+        json: rawJson,
+        history: hasChat ? chat.history.slice() : [],
+        pages: state.pageCount,
+        questions: state.questionCount,
+        createdAt: prev ? prev.createdAt : now,
+        updatedAt: now,
+      });
+    }).then(function () {
+      if (hasChat) chat.libraryId = id;
+      say('muted', '보관함에 저장했습니다(⊟ 버튼).');
+    }).catch(function (e) {
+      say('warn', '보관함에 저장하지 못했습니다: ' + esc(e && e.message ? e.message : String(e)));
+    });
+  }
+
+  /** 붙여넣기·보관함 경로처럼 AI 대화 없이 온 활동지도 "이걸 고쳐줘"가 되게 대화 맥락을 만들어 준다. */
+  function seedHistory(doc, rawJson) {
+    if (typeof chat === 'undefined' || chat.history.length) return;
+    var request = chat.firstRequest || ('활동지 「' + (doc.docTitle || '활동지') + '」');
+    chat.history = [
+      { role: 'user', text: '교사 요청: ' + request + '\n\n(이미 만들어진 활동지입니다. `standards` 의 성취기준은 그대로 유지하세요.)' },
+      { role: 'model', text: rawJson },
+    ];
+    chat.subjectHint = resolveTheme(doc) === 'math' ? 'math' : 'general';
+  }
+
+  var THEME_LABEL = { ko: '국어', sci: '과학', social: '사회', english: '영어', math: '수학' };
+  function fmtDate(ms) {
+    var d = new Date(ms);
+    var p = function (n) { return (n < 10 ? '0' : '') + n; };
+    return d.getFullYear() + '.' + p(d.getMonth() + 1) + '.' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+  function libStatus(msg, isErr) {
+    el.libStatus.textContent = msg || '';
+    el.libStatus.className = 'lib-status' + (isErr ? ' err' : '');
+  }
+
+  function renderLibrary() {
+    var needle = el.libSearch.value.trim().toLowerCase();
+    return libAll().then(function (list) {
+      list.sort(function (a, b) { return (b.updatedAt || 0) - (a.updatedAt || 0); });
+      el.libCount.hidden = !list.length;
+      el.libCount.textContent = list.length + '개';
+      var shown = list.filter(function (r) {
+        return !needle || (String(r.title) + ' ' + (r.request || '')).toLowerCase().indexOf(needle) !== -1;
+      });
+      el.libList.innerHTML = '';
+      if (!shown.length) {
+        var empty = document.createElement('div');
+        empty.className = 'lib-empty';
+        empty.textContent = list.length ? '검색 결과가 없습니다.' : '아직 보관된 활동지가 없습니다.\n활동지를 만들면 여기에 자동으로 쌓입니다.';
+        el.libList.appendChild(empty);
+        return;
+      }
+      shown.forEach(function (r) { el.libList.appendChild(libraryItem(r)); });
+    }).catch(function (e) {
+      el.libList.innerHTML = '';
+      libStatus(e && e.message ? e.message : String(e), true);
+    });
+  }
+  function libraryItem(r) {
+    var item = document.createElement('div');
+    item.className = 'lib-item';
+    item.innerHTML = '<div class="info"><div class="title"></div><div class="meta"></div><div class="req"></div></div>'
+      + '<div class="acts"><button class="btn sm" data-act="open">열기</button>'
+      + '<button class="btn sm" data-act="json" title="활동지 JSON 내려받기">JSON</button>'
+      + '<button class="btn sm" data-act="del">삭제</button></div>';
+    item.querySelector('.title').textContent = r.title;
+    item.querySelector('.meta').textContent = [
+      THEME_LABEL[r.theme] || r.theme, r.pages ? 'A4 ' + r.pages + '쪽' : '', r.questions ? '문항 ' + r.questions + '개' : '', fmtDate(r.updatedAt),
+    ].filter(Boolean).join(' · ');
+    var req = item.querySelector('.req');
+    req.textContent = r.request || '';
+    req.hidden = !r.request;
+    item.addEventListener('click', function (e) {
+      var act = e.target && e.target.getAttribute ? e.target.getAttribute('data-act') : null;
+      if (act === 'json') { libraryDownload(r); return; }
+      if (act === 'del') { libraryRemove(r); return; }
+      libraryOpen(r);
+    });
+    return item;
+  }
+  function safeName(s) { return String(s).replace(/[\\/:*?"<>|]/g, '_'); }
+  function libraryDownload(r) {
+    downloadBlob(new Blob([r.json], { type: 'application/json;charset=utf-8' }), safeName(r.title) + '.json');
+    libStatus('「' + r.title + '」 JSON 을 내려받았습니다. 설정의 [JSON 직접 넣기]나 [JSON 불러오기]로 다시 열 수 있습니다.');
+  }
+  function libraryRemove(r) {
+    if (!window.confirm('「' + r.title + '」을 보관함에서 지울까요? 되돌릴 수 없습니다.')) return;
+    libDelete(r.id).then(function () {
+      if (typeof chat !== 'undefined' && chat.libraryId === r.id) chat.libraryId = null;
+      libStatus('지웠습니다.');
+      renderLibrary();
+    }).catch(function (e) { libStatus(e && e.message ? e.message : String(e), true); });
+  }
+  /** 보관함 항목을 뷰어에 다시 띄운다 — 대화 맥락도 함께 되살려 이어서 고칠 수 있게. */
+  function libraryOpen(r) {
+    closeLibrary();
+    if (typeof chat !== 'undefined') {
+      chat.history = Array.isArray(r.history) ? r.history.slice() : [];
+      chat.libraryId = r.id;
+      chat.firstRequest = r.request || '';
+      chat.subjectHint = r.theme === 'math' ? 'math' : 'general';
+    }
+    el.src.value = r.json;
+    resetThread();
+    pushAI('<b>' + esc(r.title) + '</b> 을 보관함에서 불러왔어요. 다시 조판해 오른쪽에 띄웁니다 — 이어서 고쳐 달라고 말해도 됩니다.');
+    run({ silentUser: true, keepChat: true });
+  }
+  /** 파일의 활동지 JSON 을 새 항목으로 연다. */
+  function libraryImportFile(file) {
+    closeLibrary();
+    readFileInto(file);
+  }
+  function libraryBackup() {
+    libAll().then(function (list) {
+      if (!list.length) { libStatus('보관된 활동지가 없습니다.', true); return; }
+      var payload = { app: 'worksheet-grab', kind: 'library-backup', version: 1, exportedAt: new Date().toISOString(), items: list };
+      downloadBlob(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' }),
+        '활동지_보관함_' + fmtDate(Date.now()).replace(/[.: ]/g, '') + '.json');
+      libStatus(list.length + '개를 한 파일로 내려받았습니다. 다른 PC 의 [백업 복원]에 넣으면 그대로 살아납니다.');
+    }).catch(function (e) { libStatus(e && e.message ? e.message : String(e), true); });
+  }
+  function libraryRestore(file) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      var data;
+      try { data = JSON.parse(String(reader.result)); } catch (e) { libStatus('백업 파일을 읽을 수 없습니다.', true); return; }
+      var items = data && data.kind === 'library-backup' && Array.isArray(data.items) ? data.items : null;
+      if (!items) { libStatus('보관함 백업 파일이 아닙니다. 활동지 JSON 하나는 [JSON 불러오기]로 여세요.', true); return; }
+      var valid = items.filter(function (r) { return r && typeof r.id === 'string' && typeof r.json === 'string'; });
+      Promise.all(valid.map(function (r) { return libPut(r); })).then(function () {
+        libStatus(valid.length + '개를 복원했습니다(같은 항목은 덧썼습니다).');
+        renderLibrary();
+      }).catch(function (e) { libStatus(e && e.message ? e.message : String(e), true); });
+    };
+    reader.readAsText(file, 'utf-8');
+  }
+  function openLibrary() {
+    el.library.hidden = false;
+    libStatus('');
+    renderLibrary();
+    setTimeout(function () { try { el.libSearch.focus(); } catch (e) { /* noop */ } }, 30);
+  }
+  function closeLibrary() { el.library.hidden = true; }
 
   // ── 설정 모달 ───────────────────────────────────────────────────────────
   function openSettings(pane) {
@@ -5922,7 +6584,27 @@ return { latexToRuns, inlineHtmlToRuns, blockHtmlToParagraphs, ExportDocx };
   });
   el.btnPrint.addEventListener('click', printCurrent);
   el.btnSaveHtml.addEventListener('click', saveHtml);
-  el.btnSaveDocx.addEventListener('click', saveDocx);
+  el.btnSaveDocx.addEventListener('click', function () { saveEditable('docx'); });
+  el.btnSaveHwpx.addEventListener('click', function () { saveEditable('hwpx'); });
+
+  // 보관함
+  el.btnLibrary.addEventListener('click', openLibrary);
+  el.btnLibraryClose.addEventListener('click', closeLibrary);
+  el.library.addEventListener('click', function (e) {
+    if (e.target && e.target.hasAttribute && e.target.hasAttribute('data-close-lib')) closeLibrary();
+  });
+  el.libSearch.addEventListener('input', renderLibrary);
+  el.libFileIn.addEventListener('change', function (e) {
+    var file = e.target.files && e.target.files[0];
+    if (file) libraryImportFile(file);
+    e.target.value = '';
+  });
+  el.btnLibBackup.addEventListener('click', libraryBackup);
+  el.libRestoreIn.addEventListener('change', function (e) {
+    var file = e.target.files && e.target.files[0];
+    if (file) libraryRestore(file);
+    e.target.value = '';
+  });
   el.tabStudent.addEventListener('click', function () { state.mode = 'student'; syncTabs(); preview(); });
   el.tabTeacher.addEventListener('click', function () { state.mode = 'teacher'; syncTabs(); preview(); });
 
@@ -5936,7 +6618,9 @@ return { latexToRuns, inlineHtmlToRuns, blockHtmlToParagraphs, ExportDocx };
     b.addEventListener('click', function () { selectPane(b.dataset.pane); });
   });
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && !el.settings.hidden) closeSettings();
+    if (e.key !== 'Escape') return;
+    if (!el.settings.hidden) closeSettings();
+    if (!el.library.hidden) closeLibrary();
   });
 
   // 예시 요청 칩 — 그대로 보내 본다.
@@ -6003,7 +6687,8 @@ return { latexToRuns, inlineHtmlToRuns, blockHtmlToParagraphs, ExportDocx };
   // 키는 이 브라우저 localStorage 에만 저장하고, 서버를 거치지 않고 각 API 로 직접 보낸다.
 
   var LS_PROVIDER = 'wsg.ai.provider';
-  var chat = { history: [], busy: false, subjectHint: 'general', lastAiMs: 0 }; // history: [{role:'user'|'model', text}]
+  // history: [{role:'user'|'model', text}] · libraryId: 이 대화가 덧쓰는 보관함 항목 · firstRequest: 교사의 첫 요청문
+  var chat = { history: [], busy: false, subjectHint: 'general', lastAiMs: 0, libraryId: null, firstRequest: '' };
 
   function lsGet(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
   function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* 사생활 보호 모드 */ } }
@@ -6455,6 +7140,8 @@ return { latexToRuns, inlineHtmlToRuns, blockHtmlToParagraphs, ExportDocx };
     } else {
       var found = searchStandards(request, STD_SEARCH_LIMIT);
       userText = firstUserMessage(request, found);
+      chat.firstRequest = request;
+      chat.libraryId = null; // 새 활동지 — 보관함에 새 항목으로 들어간다
       chat.subjectHint = isMathSubject(found.subjects) || /수학/.test(request) ? 'math' : 'general';
       var where = [found.school, found.subjects.slice(0, 3).join('/')].filter(Boolean).join(' ');
       say('muted', '성취기준 ' + found.hits.length + '건을 함께 보냅니다'
@@ -6532,6 +7219,8 @@ return { latexToRuns, inlineHtmlToRuns, blockHtmlToParagraphs, ExportDocx };
   });
   el.btnNew.addEventListener('click', function () {
     chat.history = [];
+    chat.libraryId = null;
+    chat.firstRequest = '';
     el.ask.value = '';
     el.ask.placeholder = '중2 과학 옴의 법칙 활동지 만들어줘';
     el.src.value = '';
